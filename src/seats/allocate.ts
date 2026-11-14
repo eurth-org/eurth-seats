@@ -53,11 +53,11 @@ export function highestAverages(votes: readonly number[], seats: number, divisor
   const v = checked(votes);
   const total = seatCount(seats);
   const won = v.map(() => 0);
-  const divisor = (i: number, held: number): bigint => BigInt(divisors(held));
+  const divisor = (held: number): bigint => BigInt(divisors(held));
   // Is party a's next quotient higher than party b's? Equal quotients: more votes, then listed first.
   const ahead = (a: number, b: number): boolean => {
-    const left = v[a]! * divisor(b, won[b]!);
-    const right = v[b]! * divisor(a, won[a]!);
+    const left = v[a]! * divisor(won[b]!);
+    const right = v[b]! * divisor(won[a]!);
     if (left !== right) return left > right;
     if (v[a] !== v[b]) return v[a]! > v[b]!;
     return a < b;
@@ -78,8 +78,8 @@ export function highestAverages(votes: readonly number[], seats: number, divisor
   const waiting = won.map((_, i) => i).filter((i) => v[i]! > 0n);
   if (holders.length > 0 && waiting.length > 0) {
     // Quotients as fractions votes / divisor; compare a/b with c/d as a*d against c*b.
-    const last = (i: number): [bigint, bigint] => [v[i]!, divisor(i, won[i]! - 1)];
-    const next = (i: number): [bigint, bigint] => [v[i]!, divisor(i, won[i]!)];
+    const last = (i: number): [bigint, bigint] => [v[i]!, divisor(won[i]! - 1)];
+    const next = (i: number): [bigint, bigint] => [v[i]!, divisor(won[i]!)];
     const compare = (p: [bigint, bigint], q: [bigint, bigint]): number => {
       const d = p[0] * q[1] - q[0] * p[1];
       return d > 0n ? 1 : d < 0n ? -1 : 0;

@@ -195,3 +195,23 @@ export function voteUnits(election: Election): number[] {
 export function isFormula(system: SystemId): system is FormulaId {
   return (FORMULAS as readonly string[]).includes(system);
 }
+
+/** The election without the party at this place. Coalition picks keep pointing at the same parties. */
+export function removeParty(election: Election, index: number): Election {
+  if (index < 0 || index >= election.parties.length) return election;
+  return {
+    ...election,
+    parties: election.parties.filter((_, i) => i !== index),
+    coalition: election.coalition.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i)),
+  };
+}
+
+/** The election with a party moved one place left (-1) or right (+1) in the chamber. Coalition picks follow their parties. */
+export function moveParty(election: Election, index: number, by: -1 | 1): Election {
+  const to = index + by;
+  if (index < 0 || index >= election.parties.length || to < 0 || to >= election.parties.length) return election;
+  const parties = [...election.parties];
+  [parties[index], parties[to]] = [parties[to]!, parties[index]!];
+  const follow = (i: number): number => (i === index ? to : i === to ? index : i);
+  return { ...election, parties, coalition: election.coalition.map(follow).sort((a, b) => a - b) };
+}

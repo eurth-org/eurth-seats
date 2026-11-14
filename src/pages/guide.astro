@@ -1,0 +1,337 @@
+---
+// The guide: how votes become seats, with every formula worked through on the same small
+// election. The tables are drawn by the calculator's own code (Working.astro), and each one
+// is held to its result by tests/content.test.ts.
+import { article, ref, wikipedia } from '@eurth/style/build';
+import Page from '@eurth/style/components/Page.astro';
+import { site } from '../../eurth.config.mjs';
+import Working from '../components/Working.astro';
+import { worked } from '../content/worked';
+import { allocate } from '../seats/allocate';
+import { coalition, minimalWinning } from '../seats/coalition';
+import { listWords } from '../seats/format';
+import { encodeElection } from '../seats/link';
+import { cleanElection, defaultElection } from '../seats/model';
+import { count } from '../seats/results';
+
+const updated = '2026-11-15';
+const headline = 'How electoral systems turn votes into seats';
+const description =
+  "How votes become seats: proportional, majoritarian and mixed systems; D'Hondt, Sainte-Laguë and largest remainder worked through; thresholds and coalition maths.";
+
+// The coalition section uses the election the calculator opens with.
+const teland = defaultElection();
+const result = count(teland);
+const coalitions = minimalWinning(result).map((members) => ({
+  names: listWords(members.map((i) => result.parties[i]!.name)),
+  seats: coalition(result, members).seats,
+}));
+const telandLink = `/?d=${encodeElection(teland)}`;
+const term = (id: string): string => `/glossary/#${id}`;
+
+// The comparison table: Saltmarsh's ten seats under each formula, counted here, not typed in.
+const saltmarsh = cleanElection(worked('dhondt').election);
+const votes = saltmarsh.parties.map((p) => p.votes);
+const exact = votes.map((v) => (v * saltmarsh.size) / votes.reduce((a, b) => a + b, 0));
+const compared = (
+  [
+    ['dhondt', "D'Hondt", 'Large parties'],
+    ['droop', 'Droop quota', 'Large parties, slightly'],
+    ['modified-sainte-lague', 'Modified Sainte-Laguë', 'Middle-sized parties'],
+    ['sainte-lague', 'Sainte-Laguë', 'Nobody in particular'],
+    ['hare', 'Hare quota', 'Small parties'],
+  ] as const
+).map(([formula, name, leans]) => ({ name, leans, seats: allocate(formula, votes, saltmarsh.size).seats }));
+---
+
+<Page
+  site={site}
+  title={headline}
+  description={description}
+  crumbs={[{ name: 'Guide', path: '/guide/' }]}
+  jsonld={[article(site, { headline, path: '/guide/', description, updated })]}
+>
+  <article class="eu-prose">
+    <p class="eu-kicker">Guide</p>
+    <h1>{headline}</h1>
+    <p class="eu-lead">
+      An election ends with a pile of votes. A parliament needs a list of members. Everything in between is arithmetic, and the arithmetic a country chooses
+      shapes its politics for generations. This guide works through each method on the same small election, so you can pick one for your nation and know what it
+      will do.
+    </p>
+
+    <h2 id="families">Three families</h2>
+    <p>Every electoral system answers one question: who gets the seat? There are three broad answers.</p>
+    <ul>
+      <li>
+        <strong><a href={term('majoritarian')}>Majoritarian</a></strong> systems give each seat to whoever leads in its district.
+        <a href={term('first-past-the-post')}>First past the post</a> is the plainest: most votes wins, majority or not. These systems are simple, tie each
+        member to a place, and reward large parties and parties whose voters live close together.
+      </li>
+      <li>
+        <strong><a href={term('proportional-representation')}>Proportional</a></strong> systems share out seats in step with each party's share of the vote. A party
+        with 30% of the votes gets about 30% of the seats. How close "about" comes depends on the formula, the <a href={term('threshold')}>threshold</a> and
+        the size of the districts.
+      </li>
+      <li>
+        <strong><a href={term('mixed-member')}>Mixed</a></strong> systems do both: some members for districts, the rest from party lists.
+      </li>
+    </ul>
+    <p>
+      <a href="/">Seats</a> does the arithmetic for the proportional and mixed families. For majoritarian systems the counting happens district by district,
+      so you enter the seats each party won and Seats draws the chamber and shows how far the result strays from the vote.
+    </p>
+
+    <h2 id="example">The example: Saltmarsh</h2>
+    <p>
+      The town of Saltmarsh elects a council of ten. Four parties stood, and 100,000 people voted: the Harbour Party took 41,600 votes, the Meadow League
+      33,800, the Guild of Trades 15,200 and the Lantern Club 9,400. In exact proportion that would be 4.16, 3.38, 1.52 and 0.94 seats. Nobody can hold 0.94
+      of a seat, so something has to give, and each formula gives in a different place.
+    </p>
+
+    <h2 id="highest-averages">Highest averages: dividing the votes</h2>
+    <p>
+      The <a href={term('highest-averages')}>highest-averages</a> formulas hand out seats one at a time. Each party's votes are divided by a series of
+      <a href={term('divisor')}>divisors</a>, giving a row of <a href={term('quotient')}>quotients</a>, and the seats go to the highest quotients on the
+      whole table. The formulas differ only in their divisors.
+    </p>
+
+    <h3 id="dhondt">D'Hondt</h3>
+    <p>
+      <a href={term('dhondt')}>D'Hondt</a> divides by 1, 2, 3, 4 and so on. It is the most common list formula in the world: Belgium, Spain, Portugal, Poland,
+      Finland, Israel and the Netherlands all use it or a close relative.
+    </p>
+    <Working id="dhondt" caption="Saltmarsh by D'Hondt: votes divided by 1, 2, 3, 4 and 5. The ten highest quotients win." />
+    <p>
+      The Meadow League's fourth quotient, 8,450, takes the tenth seat, just ahead of the Harbour Party's fifth, 8,320. The Guild's second, 7,600, is further
+      back. D'Hondt always rounds in favour of size: it never gives a party fewer seats than its exact share rounded down, and the spare seats drift towards
+      the large.
+    </p>
+
+    <h3 id="sainte-lague">Sainte-Laguë</h3>
+    <p>
+      <a href={term('sainte-lague')}>Sainte-Laguë</a> divides by the odd numbers: 1, 3, 5, 7. The divisors grow twice as fast, so a party's second and
+      third seats cost more, and small parties get a look in. New Zealand, Germany, Norway and Sweden use it or a variant.
+    </p>
+    <Working id="sainte-lague" caption="Saltmarsh by Sainte-Laguë: votes divided by 1, 3, 5, 7 and 9." />
+    <p>
+      The same votes, a different council: the tenth seat now goes to the Guild of Trades. Sainte-Laguë rounds each party's exact share to the nearest whole
+      seat as nearly as it can, without leaning either way.
+    </p>
+
+    <h3 id="modified-sainte-lague">Modified Sainte-Laguë</h3>
+    <p>
+      Plain Sainte-Laguë is generous to very small parties: one seat costs only a third of what the second does. The
+      <a href={term('modified-sainte-lague')}>modified</a> form raises the first divisor from 1 to 1.4, which makes the first seat dearer and leaves the rest
+      alone. Suppose Saltmarsh had only six seats:
+    </p>
+    <Working id="sainte-lague-six" caption="Six seats by plain Sainte-Laguë: the Lantern Club's 9,400 votes take the sixth seat." />
+    <Working id="modified-six" caption="Six seats by modified Sainte-Laguë: divided by 1.4, the Lantern Club's first quotient falls to 6,714 and the seat goes elsewhere." />
+
+    <h2 id="largest-remainder">Largest remainder: counting quotas</h2>
+    <p>
+      <a href={term('largest-remainder')}>Largest remainder</a> works the other way round. First set a <a href={term('quota')}>quota</a>, the price of one
+      seat in votes. Each party gets a seat for every full quota it holds. The seats left over go to the parties with the most votes left over, the largest
+      <a href={term('remainder')}>remainders</a>.
+    </p>
+
+    <h3 id="hare">The Hare quota</h3>
+    <p>The <a href={term('hare-quota')}>Hare quota</a> is the obvious price: votes divided by seats. In Saltmarsh, 100,000 ÷ 10 = 10,000 votes a seat.</p>
+    <Working id="hare" caption="Saltmarsh by largest remainder with the Hare quota of 10,000." />
+    <p>
+      Eight seats are won outright. The two left over go to the largest remainders, which belong to the two smallest parties. That is typical: with the Hare
+      quota a small party's whole vote is often one big remainder, so this is the formula kindest to small parties.
+    </p>
+
+    <h3 id="droop">The Droop quota</h3>
+    <p>
+      The <a href={term('droop-quota')}>Droop quota</a> divides by one more than the seats: 100,000 ÷ 11 = 9,090.91. A lower price means more seats are won
+      outright and fewer are left to the remainders.
+    </p>
+    <Working id="droop" caption="Saltmarsh by largest remainder with the Droop quota of 9,090.91." />
+    <p>Now nine seats are won outright, the Lantern Club among the winners, and the single seat left over goes to the Meadow League.</p>
+
+    <h3 id="alabama">One strange thing about remainders</h3>
+    <p>
+      Largest remainder has a famous flaw, the <a href={term('alabama-paradox')}>Alabama paradox</a>: making the chamber bigger can cost a party a seat.
+      Three districts, North, South and Island, share a chamber by population.
+    </p>
+    <Working id="alabama-ten" caption="Ten seats: the Island's remainder of 0.43 is the largest, and wins it a second seat." />
+    <Working id="alabama-eleven" caption="Eleven seats: every remainder grows, but North and South overtake the Island, which drops to one seat." />
+    <p>
+      The United States met this in the 1880s, when a larger House would have cost Alabama a seat, and in time gave the method up. Divisor formulas such as D'Hondt and
+      Sainte-Laguë can never do it: a bigger chamber never takes a seat away.
+    </p>
+
+    <h2 id="compare">What each formula favours</h2>
+    <div class="eu-scroll">
+      <table>
+        <caption>Saltmarsh's ten seats under each formula.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Formula</th>
+            <th scope="col">Harbour</th>
+            <th scope="col">Meadow</th>
+            <th scope="col">Guild</th>
+            <th scope="col">Lantern</th>
+            <th scope="col">Leans towards</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Exact share</th>
+            {exact.map((share) => <td>{share.toFixed(2)}</td>)}
+            <td></td>
+          </tr>
+          {
+            compared.map((row) => (
+              <tr>
+                <th scope="row">{row.name}</th>
+                {row.seats.map((s) => <td>{s}</td>)}
+                <td>{row.leans}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p>
+      One seat in ten moved. In a chamber of 150 the formulas rarely differ by more than a seat or two per party, but a seat or two is often the difference
+      between a <a href={term('majority')}>majority</a> and none. The fewer seats there are to share, the more the formula matters.
+    </p>
+
+    <h2 id="thresholds">Thresholds</h2>
+    <p>
+      A <a href={term('threshold')}>threshold</a> is a bar to entry: a party below a set share of the vote, often 3 to 5 per cent, gets no seats whatever
+      the formula says. Türkiye asks 7%, Germany and New Zealand 5%, Israel 3.25%; the Netherlands asks only for enough votes to fill one seat. Thresholds
+      keep a parliament from splintering, at the cost of <a href={term('wasted-votes')}>wasted votes</a>.
+    </p>
+    <Working id="threshold" caption="Saltmarsh by D'Hondt with a 10% threshold: the Lantern Club's 9.4% falls short, and its seat goes to the Harbour Party." />
+    <p>
+      The votes of the parties left out are set aside, and the seats are shared among the rest. Every party that gets in gains a little, the largest most of
+      all.
+    </p>
+    <p>
+      There is also a threshold nobody wrote down. In a district with five seats, a party needs something like a sixth of the vote to win one, whatever the
+      law says. That is why Spain, with many small districts, is far less proportional than the Netherlands with one large one, although both use D'Hondt.
+      The number of seats per district is the <a href={term('district-magnitude')}>district magnitude</a>, and it matters more than the formula.
+    </p>
+
+    <h2 id="bonus">A bonus for the winner</h2>
+    <p>
+      Some countries want proportional representation and a government that can govern. A <a href={term('bonus')}>majority bonus</a> gives the party with
+      the most votes extra seats before the rest are shared out. Greece long gave 50 of its 300 seats this way, and Italy has tried several versions.
+    </p>
+    <Working id="bonus" caption="Saltmarsh with a two-seat bonus: eight seats by Sainte-Laguë, then two more for the Harbour Party." />
+    <p>The Harbour Party's 41.6% of the vote becomes half the council. Whether that is a sensible fix or a thumb on the scale is a fine thing for your nation to argue about.</p>
+
+    <h2 id="mixed">Mixed-member systems</h2>
+    <p>
+      In a <a href={term('mixed-member')}>mixed-member</a> system voters usually cast two votes: one for a local member, one for a party. The question is what
+      the party vote does. Say Saltmarsh elects five councillors in wards and five from lists, and the Harbour Party wins four wards and the Meadow League one.
+    </p>
+
+    <h3 id="top-up">With a top-up</h3>
+    <p>
+      In the <a href={term('compensatory-seats')}>compensatory</a> kind, called mixed-member proportional, the party vote decides the make-up of the whole
+      chamber. Each party's fair share is worked out first, and list seats top up whatever it won in the wards.
+    </p>
+    <Working id="mixed-top-up" caption="Top-up: the whole council is shared by Sainte-Laguë (4, 3, 2, 1), and the list seats make up the difference from the wards." />
+    <p>The Harbour Party already holds its four seats from the wards, so it gets nothing from the list. The result is proportional, and every ward still has its own councillor.</p>
+
+    <h3 id="side-by-side">Side by side</h3>
+    <p>
+      In <a href={term('parallel-voting')}>parallel voting</a>, as in Japan, the list seats are simply a second, smaller election held next to the first.
+    </p>
+    <Working id="mixed-parallel" caption="Side by side: the five list seats are shared by Sainte-Laguë on their own, and added to the wards." />
+    <p>The Harbour Party keeps its sweep of the wards and takes its share of the lists as well: six seats of ten on 41.6% of the vote.</p>
+
+    <h3 id="overhang">Overhang seats</h3>
+    <p>
+      A top-up has one loose end. What if a party wins more wards than its fair share of the whole chamber? Those extra seats are
+      <a href={term('overhang')}>overhang seats</a>. The party keeps them, and the chamber grows.
+    </p>
+    <Working id="overhang" caption="The Harbour Party wins all five wards, one more than its share of four: the council has eleven members this term." />
+
+    <h3 id="new-zealand">A real one: New Zealand, 2020</h3>
+    <p>
+      New Zealand elects 120 members by mixed-member proportional representation with Sainte-Laguë. In 2020 Labour won 46 of the 72 electorates and half of
+      the party vote.
+    </p>
+    <Working id="new-zealand-2020" caption="New Zealand's 2020 general election: party votes and electorates of the five parties that won seats." />
+    <p>
+      These are the seats the Electoral Commission declared. The Māori Party came in under the 5% threshold because it won an electorate, a rule New Zealand
+      has and Seats does not: to copy it, lower the threshold.
+    </p>
+
+    <h2 id="coalitions">Coalition maths</h2>
+    <p>
+      Proportional systems seldom hand one party a <a href={term('majority')}>majority</a>, which is more than half the seats: 61 of 120, 51 of 100. When
+      nobody has one, the parliament is <a href={term('hung-parliament')}>hung</a>, and the real contest begins after the count. Take the election the
+      <a href={telandLink}>calculator opens with</a>, the National Assembly of Teland: 120 seats, the largest party on 41.
+    </p>
+    <p>
+      A <a href={term('coalition')}>coalition</a> needs {result.majority}. The ones worth studying are the
+      <a href={term('minimal-winning-coalition')}>minimal winning coalitions</a>: those with a majority that would lose it if any one partner walked out. A
+      partner who is not needed has no leverage and usually is not invited. Teland has {coalitions.length}:
+    </p>
+    <ul>
+      {coalitions.map((c) => <li>{c.names}: {c.seats} seats.</li>)}
+    </ul>
+    <p>
+      Three things follow, all useful for fiction. First, the largest party is not always in government: the last two coalitions shut it out. Second, a
+      small party that completes a majority has power far beyond its size. Third, the <a href={term('margin')}>margin</a> matters: a coalition with two seats
+      to spare lives in fear of two unhappy backbenchers. A government can also carry on without a majority, as a
+      <a href={term('minority-government')}>minority government</a>, for as long as the others cannot agree to bring it down.
+    </p>
+
+    <h2 id="measuring">Measuring the distortion</h2>
+    <p>
+      The results table in Seats shows, for each party, the difference between its share of the seats and its share of the votes. The
+      <a href={term('gallagher-index')}>Gallagher index</a> boils the whole table down to one number: square each party's difference in percentage points,
+      add them up, halve the sum and take the square root. Teland scores {result.gallagher!.toFixed(1)}. Proportional systems usually stay under 5; first past the
+      post often goes over 10.
+    </p>
+
+    <h2 id="choosing">Choosing for your nation</h2>
+    <ul>
+      <li><strong>A stable two-party state with strong local ties:</strong> first past the post. Expect lopsided majorities and bitter third parties.</li>
+      <li><strong>A consensus democracy of many parties:</strong> Sainte-Laguë or D'Hondt in large districts with a low threshold. Expect coalitions, and long talks to form them.</li>
+      <li><strong>A country that wants both:</strong> mixed-member with a top-up, and a 5% threshold to keep the numbers manageable.</li>
+      <li><strong>A dominant party that likes to look fair:</strong> D'Hondt in small districts, a high threshold, or a majority bonus. All three are entirely legal.</li>
+      <li><strong>A young democracy after a hard decade:</strong> largest remainder with the Hare quota and no threshold, so that every faction has a voice inside the chamber.</li>
+    </ul>
+    <p>
+      Whatever you choose, <a href="/">try it in the calculator</a> with your parties' numbers, or start from one of the <a href="/examples/">examples</a>. The
+      <a href="/glossary/">glossary</a> has every term in one place. When the chamber looks right, give it a country: <a href="https://eurth.org">Eurth</a>
+      has a world for it to live in.
+    </p>
+
+    <h2 id="sources">Sources</h2>
+    <ul>
+      <li>
+        Michael Gallagher, "Proportionality, disproportionality and electoral systems", <cite>Electoral Studies</cite> 10 (1991), pages 33 to 51: the index, and a
+        comparison of the formulas.
+      </li>
+      <li>
+        <a href={ref('https://www.idea.int/publications/catalogue/electoral-system-design-new-international-idea-handbook', site.host)}
+          >Electoral System Design: The New International IDEA Handbook</a
+        > (2005): the families of systems and where each is used.
+      </li>
+      <li><a href={ref('https://aceproject.org/ace-en/topics/es', site.host)}>ACE Electoral Knowledge Network, Electoral Systems</a>: an encyclopaedia of how elections are run.</li>
+      <li>
+        <a href={ref('https://www.electionresults.govt.nz/electionresults_2020/', site.host)}>New Zealand Electoral Commission, 2020 General Election official results</a>: the party votes
+        and seats in the example above.
+      </li>
+      <li>
+        Wikipedia: <a href={wikipedia("D'Hondt method", site.host)}>D'Hondt method</a>, <a href={wikipedia('Sainte-Laguë method', site.host)}>Sainte-Laguë method</a>,
+        <a href={wikipedia('Largest remainders method', site.host)}>Largest remainders method</a>, <a href={wikipedia('Electoral threshold', site.host)}>Electoral threshold</a>,
+        <a href={wikipedia('Majority bonus system', site.host)}>Majority bonus system</a>,
+        <a href={wikipedia('Mixed-member proportional representation', site.host)}>Mixed-member proportional representation</a>,
+        <a href={wikipedia('Parallel voting', site.host)}>Parallel voting</a>, <a href={wikipedia('Overhang seat', site.host)}>Overhang seat</a>,
+        <a href={wikipedia('Apportionment paradox', site.host)}>Apportionment paradox</a> and <a href={wikipedia('Gallagher index', site.host)}>Gallagher index</a>.
+      </li>
+    </ul>
+    <p class="eu-muted">Last updated <time datetime={updated}>15 November 2026</time>.</p>
+  </article>
+</Page>

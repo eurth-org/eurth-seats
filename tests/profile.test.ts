@@ -1,4 +1,6 @@
+import { createProfile, getSection, setSection, validateProfile } from '@eurth/profile';
 import { describe, expect, it } from 'vitest';
+import { electionLink } from '../src/seats/link';
 import { cleanElection, defaultElection } from '../src/seats/model';
 import {
   fromGovernment,
@@ -12,7 +14,7 @@ import { count } from '../src/seats/results';
 
 const teland = defaultElection();
 const outcome = count(teland);
-const link = 'https://seats.eurth.org/?d=1.eyJzIjoxMjB9';
+const link = electionLink(teland, 'https://seats.eurth.org/');
 
 describe('writing the "seats" section', () => {
   const section = toSeatsSection(teland, outcome, { link });
@@ -36,6 +38,18 @@ describe('writing the "seats" section', () => {
       { name: 'Independents', seats: 10, colour: '#a69af9', votes: 8.2, voteShare: 8.2 },
     ]);
     expect(section.summary).toContain('National Assembly of Teland, Election 2026. 120 seats');
+  });
+
+  it('is a valid section of a valid profile, by the profile package\'s own check', () => {
+    const profile = setSection(createProfile('Teland'), 'seats', section);
+    const result = validateProfile(profile);
+    expect(result.ok ? [] : result.errors).toEqual([]);
+    expect(getSection(profile, 'seats')).toMatchObject({ chamber: 'National Assembly of Teland', total: 120 });
+    // Another tool's section, and one nobody knows, are left exactly as they were.
+    const other = { ...profile, flag: { link: 'https://flag.eurth.org/?s=x' }, futuretool: { anything: [1, 2, 3] } };
+    const again = setSection(other as typeof profile, 'seats', toSeatsSection(teland, outcome, { link, previous: getSection(other as typeof profile, 'seats') }));
+    expect((again as Record<string, unknown>).flag).toEqual({ link: 'https://flag.eurth.org/?s=x' });
+    expect((again as Record<string, unknown>).futuretool).toEqual({ anything: [1, 2, 3] });
   });
 
   it('keeps to the profile schema: its types, lengths and patterns', () => {
@@ -94,7 +108,7 @@ describe('writing the "seats" section', () => {
 describe('reading the "seats" section', () => {
   it('brings back the whole election that Seats wrote, parties without seats and all', () => {
     const picked = { ...teland, coalition: [1, 2], layout: 'horseshoe' as const };
-    const section = JSON.parse(JSON.stringify(toSeatsSection(picked, count(picked), { link })));
+    const section = JSON.parse(JSON.stringify(toSeatsSection(picked, count(picked), { link: electionLink(picked, 'https://seats.eurth.org/') })));
     expect(fromSeatsSection(section)).toEqual(picked);
     expect(fromSeatsSection({ ...section, updated: '2026-11-14T09:30:00Z' })).toEqual(picked);
   });
@@ -120,7 +134,7 @@ describe('reading the "seats" section', () => {
 
   it('counts again when the parties have votes and the system is one it knows', () => {
     const section = toSeatsSection(teland, outcome);
-    delete section.design;
+    expect('link' in section).toBe(false);
     const election = fromSeatsSection(section)!;
     expect(election).toMatchObject({ system: 'dhondt', threshold: 5, votesAs: 'percent', size: 120 });
     // Only the five parties with seats are in the section, so the Pirates' 2.8% is gone and the shares shift a little.
@@ -129,14 +143,15 @@ describe('reading the "seats" section', () => {
     expect(counts).toMatchObject({ system: 'hare', votesAs: 'counts' });
   });
 
-  it('falls back to the plain fields when the design is from a version it does not know', () => {
-    const section = { ...toSeatsSection(teland, outcome), design: { v: 99, d: { future: true } } };
+  it('falls back to the plain fields when the link is not one it can read', () => {
+    const section = { ...toSeatsSection(teland, outcome), link: 'https://seats.eurth.org/?d=99.eyJmdXR1cmUiOnRydWV9' };
+    expect(fromSeatsSection({ ...section, link: 'https://example.org/?d=nonsense' })).toMatchObject({ size: 120, system: 'dhondt' });
     expect(fromSeatsSection(section)).toMatchObject({ chamber: 'National Assembly of Teland', size: 120, system: 'dhondt' });
   });
 
   it('makes nothing of nothing, and never throws on nonsense', () => {
     for (const nothing of [undefined, null, {}, [], 'seats', 7, { updated: '2026-11-14T09:30:00Z' }]) expect(fromSeatsSection(nothing)).toBeNull();
-    expect(fromSeatsSection({ parties: 'many', total: 'lots', chamber: 5, design: 'x' })).toBeNull();
+    expect(fromSeatsSection({ parties: 'many', total: 'lots', chamber: 5, link: 7 })).toBeNull();
     expect(fromSeatsSection({ total: 12 })).toMatchObject({ size: 12, parties: [] });
     expect(fromSeatsSection({ parties: [null, 'x', { name: '<b>', seats: 1e9 }] })!.parties).toEqual([
       { name: 'Party 1', colour: '#2698d4', votes: 0, seats: 0 },

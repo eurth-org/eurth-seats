@@ -1,0 +1,60 @@
+---
+// The glossary: each term has an id to link to, and the whole set is given to search engines
+// as a DefinedTermSet. The terms live in src/content/glossary.ts.
+import { definedTermSet } from '@eurth/style/build';
+import Page from '@eurth/style/components/Page.astro';
+import { site } from '../../eurth.config.mjs';
+import { GLOSSARY, inSentence } from '../content/glossary';
+
+const name = 'Glossary of election and parliament terms';
+const byId = new Map(GLOSSARY.map((t) => [t.id, t]));
+---
+
+<Page
+  site={site}
+  title={name}
+  description="Every term Seats uses, in a sentence or two each: D'Hondt, Sainte-Laguë, quota, threshold, overhang seat, hung parliament, coalition and more."
+  crumbs={[{ name: 'Glossary', path: '/glossary/' }]}
+  jsonld={[definedTermSet(site, { name, path: '/glossary/', terms: GLOSSARY })]}
+>
+  <article class="eu-prose">
+    <p class="eu-kicker">Glossary</p>
+    <h1>{name}</h1>
+    <p class="eu-lead">
+      The words of electoral arithmetic, in a sentence or two each. The <a href="/guide/">guide</a> shows how they fit together, with worked examples; the
+      <a href="/">calculator</a> does the sums.
+    </p>
+    <dl>
+      {
+        GLOSSARY.map((t) => (
+          <>
+            <dt id={t.id}>{t.term}</dt>
+            <dd>
+              {t.definition}
+              {t.see && t.see.length > 0 && (
+                <span class="see">
+                  {' '}
+                  See also{' '}
+                  {t.see.map((id, i) => (
+                    <>
+                      {i > 0 && (i === t.see!.length - 1 ? ' and ' : ', ')}
+                      <a href={`#${id}`}>{inSentence(byId.get(id)!.term)}</a>
+                    </>
+                  ))}
+                  .
+                </span>
+              )}
+            </dd>
+          </>
+        ))
+      }
+    </dl>
+  </article>
+</Page>
+
+<style>
+  /* A term that was jumped to stays clear of the top of the window. */
+  dt {
+    scroll-margin-top: var(--space-6);
+  }
+</style>

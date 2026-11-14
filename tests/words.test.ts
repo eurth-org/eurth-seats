@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { coalition, minimalWinning } from '../src/seats/coalition';
-import { bySeats, chamberDescription, description, majoritySentence, profileSummary, summaryLine, title } from '../src/seats/describe';
+import { bySeats, chamberDescription, description, issueNotes, majoritySentence, profileSummary, summaryLine, title } from '../src/seats/describe';
 import { formatNumber, formatPercent, formatPoints, formatShare, listWords, seatWords } from '../src/seats/format';
 import { cleanElection, defaultElection } from '../src/seats/model';
 import { count } from '../src/seats/results';
@@ -180,6 +180,32 @@ describe('the result in words', () => {
     expect(short.length).toBeLessThanOrEqual(600);
     expect(short.length).toBeGreaterThan(0);
     expect(short.endsWith('.') || short.endsWith('…')).toBe(true);
+  });
+});
+
+describe('notes about a result', () => {
+  const notes = (value: unknown): string[] => {
+    const e = cleanElection(value);
+    return issueNotes(e, count(e));
+  };
+
+  it('are none when all is well', () => {
+    expect(issueNotes(teland, outcome)).toEqual([]);
+  });
+
+  it('say what happened and what to do next', () => {
+    expect(notes({ parties: [] })).toEqual(['Add a party to begin.']);
+    expect(notes({ parties: [{ votes: 0 }] })).toEqual(['Enter some votes, and the seats will be shared out.']);
+    expect(notes({ threshold: 40, parties: [{ votes: 30 }, { votes: 35 }, { votes: 35 }] })).toEqual(['Every party is below the 40% threshold, so nobody wins a seat. Lower the threshold.']);
+    expect(notes({ size: 10, system: 'direct', parties: [{ seats: 4 }, { seats: 3 }] })).toEqual(['3 seats are vacant: the seats entered add up to 7, and the chamber holds 10.']);
+    expect(notes({ size: 10, system: 'direct', parties: [{ seats: 9 }] })).toEqual(['1 seat is vacant: the seats entered add up to 9, and the chamber holds 10.']);
+    expect(notes({ size: 10, system: 'direct', parties: [{ seats: 8 }, { seats: 5 }] })).toEqual(["The seats entered add up to more than the chamber's 10. The chart shows all 13."]);
+    expect(notes({ size: 100, system: 'mixed', votesAs: 'percent', parties: [{ votes: 50, seats: 30 }, { votes: 40, seats: 10 }, { votes: 10, seats: 20 }] })).toEqual([
+      '10 seats of overhang: the chamber has grown from 100 to 110.',
+    ]);
+    expect(notes({ size: 1, system: 'dhondt', votesAs: 'counts', parties: [{ name: 'A', votes: 10 }, { name: 'B', votes: 10 }] })).toEqual([
+      'A dead heat between A and B was settled for A: more votes wins, then the party listed first. Real laws mostly draw lots.',
+    ]);
   });
 });
 

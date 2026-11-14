@@ -1,0 +1,199 @@
+---
+// The working of one of the guide's worked examples, as a table: the quotients of a divisor
+// formula, the quotas and remainders of largest remainder, or the districts and list seats of
+// a mixed-member system. Drawn at build time by the code the calculator runs, so the guide
+// cannot say one thing and the calculator another.
+import { worked } from '../content/worked';
+import { isDivisorFormula, quotientTable, remainderTable } from '../seats/explain';
+import { formatNumber, formatPercent, seatWords } from '../seats/format';
+import { cleanElection, isFormula, SYSTEM_LABELS, voteUnits } from '../seats/model';
+import { count } from '../seats/results';
+
+interface Props {
+  /** The id of a worked example in src/content/worked.ts. */
+  id: string;
+  /** The table's caption. */
+  caption: string;
+}
+
+const { id, caption } = Astro.props;
+const example = worked(id);
+const election = cleanElection(example.election);
+const outcome = count(election);
+const votes = voteUnits(election);
+const eligible = votes.map((v, i) => (outcome.parties[i]!.qualified ? v : 0));
+const shared = election.size - (isFormula(election.system) ? election.bonus : 0);
+const formula = election.system === 'mixed' ? election.listFormula : election.system;
+
+const quotients = isFormula(election.system) && isDivisorFormula(election.system) ? quotientTable(election.system, eligible, shared) : null;
+const remainders = election.system === 'hare' || election.system === 'droop' ? remainderTable(election.system, eligible, shared) : null;
+const mixed = election.system === 'mixed';
+
+// Which seat each winning quotient took: the highest quotient is seat 1.
+const order = new Map<string, number>();
+if (quotients) {
+  quotients.rows
+    .flatMap((row, p) => row.quotients.map((q, d) => ({ key: `${p}:${d}`, q, win: row.wins[d]!, votes: votes[p]!, p })))
+    .filter((cell) => cell.win)
+    .sort((a, b) => b.q - a.q || b.votes - a.votes || a.p - b.p)
+    .forEach((cell, i) => order.set(cell.key, i + 1));
+}
+const ordinal = (n: number): string => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th')}`;
+const decimal = (n: number): string => n.toFixed(2);
+const hasBonus = isFormula(election.system) && election.bonus > 0;
+const hasOverhang = outcome.parties.some((p) => p.overhang > 0);
+---
+
+<div class="eu-scroll">
+  <table>
+    <caption>{caption}</caption>
+    {
+      quotients && (
+        <>
+          <thead>
+            <tr>
+              <th scope="col">Party</th>
+              <th scope="col" class="n">Votes</th>
+              {quotients.divisors.map((d) => <th scope="col" class="n">÷ {d}</th>)}
+              {hasBonus && <th scope="col" class="n">Bonus</th>}
+              <th scope="col" class="n">Seats</th>
+            </tr>
+          </thead>
+          <tbody>
+            {outcome.parties.map((p, i) => (
+              <tr>
+                <th scope="row">{p.name}</th>
+                <td class="n">{formatNumber(p.votes)}</td>
+                {p.qualified ? (
+                  quotients.rows[i]!.quotients.map((q, d) =>
+                    quotients.rows[i]!.wins[d] ? (
+                      <td class="n">
+                        <strong>{formatNumber(Math.round(q))}</strong> <span class="seat">{ordinal(order.get(`${i}:${d}`)!)}</span>
+                      </td>
+                    ) : (
+                      <td class="n">{formatNumber(Math.round(q))}</td>
+                    ),
+                  )
+                ) : (
+                  <td colspan={quotients.divisors.length}>Below the {formatPercent(election.threshold)} threshold</td>
+                )}
+                {hasBonus && <td class="n">{p.bonus > 0 ? `+${p.bonus}` : ''}</td>}
+                <td class="n">
+                  <strong>{p.seats}</strong>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </>
+      )
+    }
+    {
+      remainders && (
+        <>
+          <thead>
+            <tr>
+              <th scope="col">Party</th>
+              <th scope="col" class="n">Votes</th>
+              <th scope="col" class="n">Quotas</th>
+              <th scope="col" class="n">Full quotas</th>
+              <th scope="col" class="n">Remainder</th>
+              <th scope="col" class="n">Seats</th>
+            </tr>
+          </thead>
+          <tbody>
+            {outcome.parties.map((p, i) => (
+              <tr>
+                <th scope="row">{p.name}</th>
+                <td class="n">{formatNumber(p.votes)}</td>
+                {p.qualified ? (
+                  <>
+                    <td class="n">{decimal(remainders.rows[i]!.quotas)}</td>
+                    <td class="n">{remainders.rows[i]!.full}</td>
+                    <td class="n">
+                      {remainders.rows[i]!.extra > 0 ? (
+                        <>
+                          <strong>{decimal(remainders.rows[i]!.remainder)}</strong> <span class="seat">+1</span>
+                        </>
+                      ) : (
+                        decimal(remainders.rows[i]!.remainder)
+                      )}
+                    </td>
+                  </>
+                ) : (
+                  <td colspan="3">Below the {formatPercent(election.threshold)} threshold</td>
+                )}
+                <td class="n">
+                  <strong>{p.seats}</strong>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </>
+      )
+    }
+    {
+      mixed && (
+        <>
+          <thead>
+            <tr>
+              <th scope="col">Party</th>
+              <th scope="col" class="n">List votes</th>
+              <th scope="col" class="n">Districts won</th>
+              <th scope="col" class="n">List seats</th>
+              {hasOverhang && <th scope="col" class="n">Overhang</th>}
+              <th scope="col" class="n">Seats</th>
+            </tr>
+          </thead>
+          <tbody>
+            {outcome.parties.map((p) => (
+              <tr>
+                <th scope="row">{p.name}</th>
+                <td class="n">{formatNumber(p.votes)}</td>
+                <td class="n">{p.district}</td>
+                <td class="n">{p.list}</td>
+                {hasOverhang && <td class="n">{p.overhang || ''}</td>}
+                <td class="n">
+                  <strong>{p.seats}</strong>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </>
+      )
+    }
+    <tfoot>
+      <tr>
+        <th scope="row">Total</th>
+        <td class="n">{formatNumber(outcome.totalVotes)}</td>
+        <td colspan={(quotients ? quotients.divisors.length + (hasBonus ? 1 : 0) : remainders ? 3 : 2 + (hasOverhang ? 1 : 0))}>
+          {quotients && `The ${shared} highest quotients each win a seat.`}
+          {remainders && `Quota ${formatNumber(Math.round(remainders.quota * 100) / 100)}. ${seatWords(remainders.left)} left for the largest remainders.`}
+          {mixed && `List seats by ${SYSTEM_LABELS[formula]}${election.mixedMode === 'parallel' ? ', on their own' : ', as a top-up'}.`}
+        </td>
+        <td class="n">
+          <strong>{outcome.seated}</strong>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<style>
+  caption {
+    padding-bottom: var(--space-2);
+    font: var(--type-label);
+    text-align: start;
+  }
+
+  .n {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* A winning number is bold and says which seat it won: never told apart by colour. */
+  .seat {
+    font: var(--type-note);
+    color: var(--ink-muted);
+  }
+</style>

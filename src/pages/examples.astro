@@ -1,0 +1,79 @@
+---
+// Examples: four made-up elections, one for each family of system, each a link into the
+// calculator. The links and pictures are made at build time with the calculator's own code.
+import Page from '@eurth/style/components/Page.astro';
+import { site } from '../../eurth.config.mjs';
+import { EXAMPLES } from '../content/examples';
+import { description, summaryLine } from '../seats/describe';
+import { encodeElection } from '../seats/link';
+import { cleanElection } from '../seats/model';
+import { chamberPicture, svgAddress } from '../seats/picture';
+import { count } from '../seats/results';
+
+const examples = EXAMPLES.map((example) => {
+  const election = cleanElection(example.election);
+  const outcome = count(election);
+  return {
+    ...example,
+    href: `/?d=${encodeElection(election)}`,
+    picture: svgAddress(chamberPicture(election, outcome, { frame: { width: 1200, height: 630 }, id: example.id })),
+    alt: description(election, outcome),
+    summary: summaryLine(outcome),
+  };
+});
+---
+
+<Page
+  site={site}
+  title="Example elections"
+  description="Four made-up elections to open in the calculator: a list election with a threshold, first past the post, a mixed-member system and a majority bonus."
+  crumbs={[{ name: 'Examples', path: '/examples/' }]}
+>
+  <div class="eu-stack">
+    <header class="eu-prose">
+      <p class="eu-kicker">Examples</p>
+      <h1>Example elections</h1>
+      <p class="eu-lead">
+        Four made-up elections, one for each family of electoral system. Open one in the <a href="/">calculator</a> and change what you like; the
+        <a href="/guide/">guide</a> explains what is going on, and the <a href="/glossary/">glossary</a> has the words.
+      </p>
+    </header>
+    <ul class="gallery">
+      {
+        examples.map((x) => (
+          <li>
+            <a class="eu-card" href={x.href}>
+              <img src={x.picture} alt={x.alt} width="1200" height="630" loading="lazy" />
+              <p class="eu-kicker">{x.family}</p>
+              <h2>{x.name}</h2>
+              <p>{x.note}</p>
+              <p class="eu-data">{x.summary}</p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Page>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .gallery img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+  }
+
+  .gallery h2 {
+    font: var(--type-heading);
+  }
+</style>

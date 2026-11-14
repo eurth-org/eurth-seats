@@ -9,7 +9,7 @@ import {
   seenAs,
   type ColourVision,
 } from '../src/seats/colours';
-import { fromCompact, LINK_VERSION, toCompact } from '../src/seats/link';
+import { electionFromLink, electionLink, encodeElection, fromCompact, LINK_VERSION, toCompact } from '../src/seats/link';
 import {
   cleanElection,
   cleanText,
@@ -20,7 +20,9 @@ import {
   MAX_PARTIES,
   MAX_SIZE,
   MIXED_MODES,
+  moveParty,
   newParty,
+  removeParty,
   SYSTEM_LABELS,
   SYSTEMS,
   voteUnits,
@@ -173,6 +175,32 @@ describe('cleaning an election', () => {
   });
 });
 
+describe('changing the list of parties', () => {
+  const picked = { ...defaultElection(), coalition: [1, 2] }; // Civic Alliance and Liberal Union
+
+  it('removing a party keeps the coalition pointing at the same parties', () => {
+    const without = removeParty(picked, 0);
+    expect(without.parties.map((p) => p.name)).toEqual(['Civic Alliance', 'Liberal Union', 'Agrarian League', 'Independents', 'Pirate Party']);
+    expect(without.coalition).toEqual([0, 1]);
+    expect(removeParty(picked, 1).coalition).toEqual([1]);
+    expect(removeParty(picked, 5).coalition).toEqual([1, 2]);
+    expect(removeParty(picked, 9)).toBe(picked);
+    expect(cleanElection(without)).toEqual(without);
+  });
+
+  it('moving a party moves its place in the chamber, and the coalition follows', () => {
+    const moved = moveParty(picked, 2, -1);
+    expect(moved.parties.slice(0, 3).map((p) => p.name)).toEqual(['National Labour', 'Liberal Union', 'Civic Alliance']);
+    expect(moved.coalition).toEqual([1, 2]);
+    const right = moveParty(picked, 2, 1);
+    expect(right.parties[3]!.name).toBe('Liberal Union');
+    expect(right.coalition).toEqual([1, 3]);
+    expect(moveParty(picked, 0, -1)).toBe(picked);
+    expect(moveParty(picked, 5, 1)).toBe(picked);
+    expect(picked.parties[2]!.name).toBe('Liberal Union');
+  });
+});
+
 describe('the election in its link', () => {
   const roundTrip = (value: unknown) => fromCompact(JSON.parse(JSON.stringify(toCompact(cleanElection(value)))), LINK_VERSION);
 
@@ -207,7 +235,7 @@ describe('the election in its link', () => {
     });
     expect(toCompact(emptyElection())).toEqual({ s: 100, y: 'dh', p: [] });
     // As the query string will carry it: comfortably short.
-    expect(encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(toCompact(defaultElection())))))).length).toBeLessThan(420);
+    expect(encodeElection(defaultElection()).length).toBeLessThan(420);
   });
 
   it('fits the largest election into a link', () => {
@@ -226,6 +254,16 @@ describe('the election in its link', () => {
     expect(Math.ceil((JSON.stringify(toCompact(big)).length * 4) / 3)).toBeLessThan(8000);
   });
 
+  it('makes a whole link and reads it back', () => {
+    const link = electionLink(defaultElection(), 'https://seats.eurth.org/examples/?x=1#top');
+    expect(link.startsWith('https://seats.eurth.org/examples/?d=1.')).toBe(true);
+    expect(link).toBe(`https://seats.eurth.org/examples/?d=${encodeElection(defaultElection())}`);
+    expect(electionFromLink(link)).toEqual(defaultElection());
+    for (const bad of [null, 7, '', 'not a link', 'https://seats.eurth.org/', 'https://seats.eurth.org/?d=nonsense', 'https://seats.eurth.org/?d=2.e30', `https://seats.eurth.org/?d=1.${'A'.repeat(20_000)}`]) {
+      expect(electionFromLink(bad), String(bad).slice(0, 40)).toBeNull();
+    }
+  });
+
   it("treats whatever arrives as someone else's input", () => {
     for (const bad of [null, undefined, 'x', 7, [], [1, 2]]) expect(fromCompact(bad)).toBeNull();
     expect(fromCompact({ s: 10 }, 2)).toBeNull();
@@ -237,3 +275,46 @@ describe('the election in its link', () => {
     expect(odd!.parties).toHaveLength(4);
   });
 });
+
+describe('a random election', () => {
+  // The same seeded generator as the allocation tests, so these are the same elections every run.
+  const seeded = (seed: number) => {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  it('is always a clean election with a full chamber', async () => {
+    const { randomElection } = await import('../src/seats/random');
+    const { count } = await import('../src/seats/results');
+    const next = seeded(11);
+    for (let i = 0; i < 300; i++) {
+      const e = randomElection(next);
+      expect(cleanElection(e)).toEqual(e);
+      expect(e.parties.length).toBeGreaterThanOrEqual(3);
+      expect(e.parties.length).toBeLessThanOrEqual(7);
+      expect(new Set(e.parties.map((p) => p.name)).size).toBe(e.parties.length);
+      expect(new Set(e.parties.map((p) => p.colour)).size).toBe(e.parties.length);
+      expect(e.parties.reduce((sum, p) => sum + p.votes, 0)).toBeCloseTo(100, 6);
+      for (const p of e.parties) expect(p.votes).toBeGreaterThan(0);
+      const outcome = count(e);
+      expect(outcome.seated).toBe(e.size);
+      expect(roundTripOf(e)).toEqual(e);
+    }
+  });
+
+  it('is the same election for the same random numbers', async () => {
+    const { randomElection } = await import('../src/seats/random');
+    expect(randomElection(seeded(5))).toEqual(randomElection(seeded(5)));
+    expect(randomElection(seeded(5))).not.toEqual(randomElection(seeded(6)));
+  });
+});
+
+function roundTripOf(value: unknown) {
+  return electionFromLink(electionLink(cleanElection(value), 'https://seats.eurth.org/'));
+}

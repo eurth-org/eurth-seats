@@ -1,7 +1,7 @@
 /**
  * An election lives in its link. This is the compact form that goes into the query string:
- * short keys, defaults left out, parties as small arrays. The site wraps it with
- * @eurth/style's encodeState(value, LINK_VERSION), which gives "?d=1.<base64url JSON>".
+ * short keys, defaults left out, parties as small arrays. It is wrapped by @eurth/style's
+ * encodeState(value, LINK_VERSION), which gives "?d=1.<base64url JSON>".
  *
  * Whatever comes back out of a link goes through cleanElection: it is someone else's input.
  *
@@ -14,6 +14,7 @@
  *
  * To change the format: raise LINK_VERSION, and keep reading every older version.
  */
+import { decodeState, encodeState } from '@eurth/style';
 import { cleanElection, type Election, type FormulaId, type Layout, type MixedMode, type SystemId } from './model';
 
 export const LINK_VERSION = 1;
@@ -85,4 +86,31 @@ export function fromCompact(value: unknown, version: number = LINK_VERSION): Ele
     coalition: o.c,
     parties,
   });
+}
+
+/** The value of the link's "d" parameter for this election: "1.<base64url JSON>". */
+export function encodeElection(election: Election): string {
+  return encodeState(toCompact(election), LINK_VERSION);
+}
+
+/** The election's whole link, on this address: "https://seats.eurth.org/?d=1.…". */
+export function electionLink(election: Election, base: string): string {
+  const url = new URL(base);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('d', encodeElection(election));
+  return url.toString();
+}
+
+/** The election in a link made by electionLink, or null when the link holds none that this code can read. */
+export function electionFromLink(link: unknown): Election | null {
+  if (typeof link !== 'string' || link.length > 12_000) return null;
+  let state: string | null;
+  try {
+    state = new URL(link).searchParams.get('d');
+  } catch {
+    return null;
+  }
+  const decoded = decodeState(state);
+  return decoded ? fromCompact(decoded.value, decoded.version) : null;
 }

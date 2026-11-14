@@ -109,3 +109,33 @@ export function profileSummary(election: Election, outcome: Outcome, max = 600):
   }
   return out.trimEnd() || `${full.slice(0, max - 1).trimEnd()}…`;
 }
+
+/**
+ * What the person should know about a result, a sentence each: nothing to count, empty
+ * seats, too many seats, overhang, a dead heat. Empty when all is well.
+ */
+export function issueNotes(election: Election, outcome: Outcome): string[] {
+  const notes: string[] = [];
+  const names = (list: number[]): string => listWords(list.map((i) => outcome.parties[i]?.name ?? ''));
+  const typed = election.system === 'direct' ? 'seats' : 'district seats';
+  for (const issue of outcome.issues) {
+    if (issue === 'no-votes') notes.push(election.parties.length === 0 ? 'Add a party to begin.' : 'Enter some votes, and the seats will be shared out.');
+    if (issue === 'none-qualified') notes.push(`Every party is below the ${formatShare(election.threshold / 100).replace('.0%', '%')} threshold, so nobody wins a seat. Lower the threshold.`);
+    if (issue === 'vacant') {
+      notes.push(
+        election.system === 'direct'
+          ? `${seatWords(outcome.vacant)} ${outcome.vacant === 1 ? 'is' : 'are'} vacant: the seats entered add up to ${outcome.seated}, and the chamber holds ${outcome.total}.`
+          : `${seatWords(outcome.vacant)} ${outcome.vacant === 1 ? 'is' : 'are'} vacant.`,
+      );
+    }
+    if (issue === 'too-many-seats') notes.push(`The ${typed} entered add up to more than the chamber's ${outcome.size}. The chart shows all ${outcome.seated}.`);
+    if (issue === 'overhang') {
+      const extra = outcome.total - outcome.size;
+      notes.push(`${seatWords(extra)} of overhang: the chamber has grown from ${outcome.size} to ${outcome.total}.`);
+    }
+    if (issue === 'tie' && outcome.tie) {
+      notes.push(`A dead heat between ${names([...outcome.tie.won, ...outcome.tie.lost])} was settled for ${names(outcome.tie.won)}: more votes wins, then the party listed first. Real laws mostly draw lots.`);
+    }
+  }
+  return notes;
+}

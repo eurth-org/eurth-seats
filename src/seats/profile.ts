@@ -7,9 +7,10 @@
  *
  *   setSection(profile, 'seats', toSeatsSection(election, outcome, { link, previous: getSection(profile, 'seats') }))
  *
- * The section holds what the schema asks for (chamber, total, system, election, and the
- * parties that hold seats, largest first), which any other tool can read, plus what Seats
- * needs to bring the whole election back:
+ * The section is small, as the handbook asks: what the schema names (chamber, total, system,
+ * election, and the parties that hold seats, largest first), which any other tool can read,
+ * the share link, which brings the whole election back, and a few more fields a reader may
+ * want:
  *
  *   systemId    the system's id, for example "dhondt"
  *   threshold   the national threshold, in percent
@@ -17,12 +18,11 @@
  *   majority    seats needed for a majority
  *   parties[].votes        the party's votes, as typed
  *   parties[].voteShare    its share of the vote, in percent with one decimal
- *   design      the election in the link's compact form (see link.ts), with its version
  *
- * It also reads the "government" section, which Governmint owns, for a place to start.
+  * It also reads the "government" section, which Governmint owns, for a place to start.
  */
 import { bySeats, profileSummary } from './describe';
-import { fromCompact, LINK_VERSION, toCompact } from './link';
+import { electionFromLink } from './link';
 import { cleanElection, cleanText, FORMULAS, MAX_TITLE, SYSTEM_LABELS, SYSTEMS, type Election, type SystemId } from './model';
 import type { Outcome } from './results';
 
@@ -39,7 +39,6 @@ export interface SeatsSection {
   threshold?: number;
   bonus?: number;
   majority?: number;
-  design?: { v: number; d: unknown };
   [key: string]: unknown;
 }
 
@@ -71,7 +70,6 @@ export function toSeatsSection(
     systemId: election.system,
     threshold: election.threshold,
     majority: outcome.majority,
-    design: { v: LINK_VERSION, d: toCompact(election) },
   };
   // Set, or cleared when empty, so an old value never lingers.
   const optional = (key: 'link' | 'chamber' | 'election' | 'bonus', value: string | number | undefined): void => {
@@ -89,19 +87,16 @@ export function toSeatsSection(
 /**
  * The election in a profile's "seats" section, or null when there is nothing to read.
  *
- * If Seats wrote the section, the whole election comes back from its `design`. A section
- * written by hand or by another tool has only the schema's fields: the parties and their
- * seats, which come back as seats entered directly (or with the named system, when every
- * party also has votes).
+ * If the section has a Seats link, the whole election comes back from it. A section written
+ * by hand or by another tool has only the schema's fields: the parties and their seats, which
+ * come back as seats entered directly (or with the named system, when every party also has
+ * votes).
  */
 export function fromSeatsSection(section: unknown): Election | null {
   const s = record(section);
   if (Object.keys(s).length === 0) return null;
-  const design = record(s.design);
-  if (typeof design.v === 'number') {
-    const election = fromCompact(design.d, design.v);
-    if (election) return election;
-  }
+  const linked = electionFromLink(s.link);
+  if (linked) return linked;
   const parties = (Array.isArray(s.parties) ? s.parties : []).map(record);
   if (parties.length === 0 && typeof s.total !== 'number' && typeof s.chamber !== 'string') return null;
   const withVotes = parties.length > 0 && parties.every((p) => typeof p.votes === 'number');
