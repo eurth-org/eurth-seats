@@ -1,23 +1,26 @@
 /**
  * Party colours. The defaults are ten colours that each sit on their own step of lightness
- * (CIELAB L* from about 20 to 91, never less than 7 apart), so they stay apart for people who
- * are red-green or blue-yellow colour blind and in a greyscale print. Colour is still never the
- * only key: every seat block is listed by name beside the chamber.
+ * (CIELAB L* from about 15 to 93). The steps hold for people who are red-green or blue-yellow
+ * colour blind too: seen through any of the three kinds of colour blindness, no two of them
+ * come within 5 L* of each other, so they also stay apart in a greyscale print. Colour is
+ * still never the only key: every block of seats is listed by name beside the chamber.
  *
- * They are given in the order parties get them, which alternates light and dark so that
- * neighbours in the chamber differ most. The first is eurth-blue.
+ * They were found by search rather than by eye (reds darken for some people and greens for
+ * others, so a ladder that looks even to most eyes collapses for a few), and the tests hold
+ * them to it. They are given in the order parties get them, which alternates light and dark
+ * so that neighbours in the chamber differ most. The first is eurth-blue.
  */
 export const DEFAULT_COLOURS = [
   '#2698d4', // blue, L* 60
-  '#f5ce44', // gold, 84
-  '#7e1c2d', // maroon, 28
-  '#07d1c8', // aqua, 76
-  '#554c8c', // violet, 36
-  '#ca5a35', // rust, 52
-  '#dcecb3', // mint, 91
-  '#00774f', // green, 44
-  '#eb86b5', // pink, 68
-  '#1b2d61', // indigo, 20
+  '#806220', // ochre, 43
+  '#47e9f4', // cyan, 85
+  '#540012', // crimson, 15
+  '#a69af9', // lilac, 68
+  '#144800', // forest, 25
+  '#6ed25d', // green, 76
+  '#804070', // mauve, 37
+  '#9effca', // mint, 93
+  '#009074', // teal, 53
 ] as const;
 
 /** The default colour for the party at this place in the list. After ten, they come round again. */
@@ -67,11 +70,6 @@ export function luminance(hex: string): number {
 export function contrast(a: string, b: string): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
   return (hi + 0.05) / (lo + 0.05);
-}
-
-/** Whichever of the two inks reads better on this colour: for a label laid on a party's colour. */
-export function inkOn(hex: string, dark = '#002b36', light = '#ffffff'): string {
-  return contrast(hex, dark) >= contrast(hex, light) ? dark : light;
 }
 
 export type ColourVision = 'protanopia' | 'deuteranopia' | 'tritanopia';

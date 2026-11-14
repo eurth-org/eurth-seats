@@ -164,12 +164,12 @@ export function defaultElection(): Election {
     threshold: 5,
     votesAs: 'percent',
     parties: [
-      { name: 'National Labour', votes: 26.4, colour: '#ca5a35' },
-      { name: 'Civic Alliance', votes: 17.9, colour: '#f5ce44' },
+      { name: 'National Labour', votes: 26.4, colour: '#806220' },
+      { name: 'Civic Alliance', votes: 17.9, colour: '#47e9f4' },
       { name: 'Liberal Union', votes: 33.1, colour: '#2698d4' },
-      { name: 'Agrarian League', votes: 11.6, colour: '#00774f' },
-      { name: 'Independents', votes: 8.2, colour: '#554c8c' },
-      { name: 'Pirate Party', votes: 2.8, colour: '#1b2d61' },
+      { name: 'Agrarian League', votes: 11.6, colour: '#144800' },
+      { name: 'Independents', votes: 8.2, colour: '#a69af9' },
+      { name: 'Pirate Party', votes: 2.8, colour: '#540012' },
     ],
   });
 }
