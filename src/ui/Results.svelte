@@ -19,7 +19,8 @@
 
 <section class="results" aria-labelledby="results-title">
   <h2 id="results-title">Results</h2>
-  <div class="eu-scroll">
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex: a table that scrolls sideways must be reachable by keyboard -->
+  <div class="eu-scroll" tabindex="0" role="region" aria-label="Results table">
     <table>
       <thead>
         <tr>

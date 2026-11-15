@@ -525,16 +525,32 @@
     list-style: none;
   }
 
-  /* One party: colour, name, votes, and its tools; the name takes its own row when space is short. */
+  /* One party: its colour and name on one row, then its numbers and its tools. */
   .party {
     display: grid;
-    grid-template-columns: var(--size-target) minmax(0, 1fr) minmax(0, 7rem) auto;
+    grid-template-columns: var(--size-target) minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: var(--space-2);
     align-items: end;
   }
 
-  .party.with-seats {
-    grid-template-columns: var(--size-target) minmax(0, 1fr) minmax(0, 6rem) minmax(0, 5rem) auto;
+  .party .name {
+    grid-column: 2 / -1;
+  }
+
+  .party .votes {
+    grid-column: 2 / span 2;
+  }
+
+  .party.with-seats .votes {
+    grid-column: 2;
+  }
+
+  .party .seats {
+    grid-column: 3;
+  }
+
+  .party .tools {
+    grid-column: 4;
   }
 
   .colour input {
@@ -587,26 +603,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-  }
-
-  @media (max-width: 1100px) {
-    .party,
-    .party.with-seats {
-      grid-template-columns: var(--size-target) minmax(0, 1fr) minmax(0, 1fr);
-    }
-
-    .party .name {
-      grid-column: 2 / -1;
-    }
-
-    .party .votes {
-      grid-column: 2;
-    }
-
-    .party .tools {
-      grid-column: 1 / -1;
-      justify-content: flex-end;
-    }
   }
 
   @media (max-width: 900px) {

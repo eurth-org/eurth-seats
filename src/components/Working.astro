@@ -44,7 +44,8 @@ const hasBonus = isFormula(election.system) && election.bonus > 0;
 const hasOverhang = outcome.parties.some((p) => p.overhang > 0);
 ---
 
-<div class="eu-scroll">
+<!-- A wide table scrolls inside its own box; the box takes focus so the keyboard can scroll it. -->
+<div class="eu-scroll" tabindex="0" role="region" aria-label={caption}>
   <table>
     <caption>{caption}</caption>
     {
