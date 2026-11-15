@@ -1,5 +1,7 @@
 # Feedback log
 
-What people said about Seats, and what was done about it. Newest first.
+Every point from a review of Seats, and the release that dealt with it. Newest first.
 
-Nothing yet: Seats opens on 11 December 2026.
+| Date | Point | Done in |
+| --- | --- | --- |
+| 15 November 2026 | Put the site up at seats.eurth.org ahead of its door (Stijn). | 0.1.0 |

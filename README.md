@@ -1,8 +1,8 @@
 # Seats
 
-> A friendly note: Seats is part of Eurth's advent calendar, and its door opens on 11 December 2026. The code is public, the site isn't yet. Please don't spoil the surprise before the door opens.
+> A friendly note: Seats is part of Eurth's advent calendar, and its door opens on 11 December 2026. The site is up early for testing. Please don't spoil the surprise before the door opens.
 
-Seats turns votes into seats and draws the chamber. It is one of the free worldbuilding tools by [Eurth](https://eurth.org), a worldbuilding and roleplay community since 2004, and will live at seats.eurth.org.
+Seats turns votes into seats and draws the chamber. It is one of the free worldbuilding tools by [Eurth](https://eurth.org), a worldbuilding and roleplay community since 2004, and lives at seats.eurth.org.
 
 What's next, and what each release added, is in [roadmap.md](roadmap.md).
 
@@ -81,8 +81,8 @@ Every formula is tested against the worked examples in the guide (`src/content/w
 
 Seats is a Cloudflare Worker that serves static files, on the custom domain seats.eurth.org (`wrangler.jsonc`). It needs nothing beyond the Workers Free plan.
 
-- **Before the door opens**, pushes to `main` are checked, built and tested but not deployed, and the site exists nowhere.
-- **The launch workflow** (`.github/workflows/launch.yml`) runs at 22:30 UTC on 10 December 2026: it builds, tests, waits for the time in `LAUNCH_AT` and deploys, which creates the custom domain. If the scheduled run hasn't started by 22:45 UTC, start it by hand from the Actions tab. Once Seats is live, delete that workflow.
+- **Before the door opens**, pushes to `main` are checked, built and tested but not deployed. The site was put up early, on 15 November 2026, by hand: until the door, run `npm run deploy` after a change (Wrangler must be signed in to the account that holds eurth.org).
+- **The launch workflow** (`.github/workflows/launch.yml`) runs at 22:30 UTC on 10 December 2026: it builds, tests, waits for the time in `LAUNCH_AT` and deploys. If the scheduled run hasn't started by 22:45 UTC, start it by hand from the Actions tab. Once Seats is live, delete that workflow.
 - **After the door**, every green push to `main` deploys, and the nightly run picks up new releases of `@eurth/style` and `@eurth/profile`.
 - Deploying uses `CLOUDFLARE_API_TOKEN`, a secret set once for the whole eurth-org organisation. Without it the deploy step is skipped with a warning.
 

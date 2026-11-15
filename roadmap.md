@@ -1,60 +1,54 @@
 # Roadmap
 
-Seats turns votes into seats and draws the chamber, at seats.eurth.org: one of Eurth's free worldbuilding tools. It opens as door 2 of Eurth's advent calendar, on 11 December 2026 at 00:00 in Brussels.
+Seats turns votes into seats and draws the chamber, at seats.eurth.org: one of Eurth's free worldbuilding tools, and door 2 of Eurth's advent calendar (11 December 2026, 00:00 in Brussels).
 
 Three parts: what comes next, what each release added (newest first), and what's not planned.
 
 ## Pick up here
 
-**Waiting for Stijn to approve the plan below.** Nothing is built yet. Once approved, start at step 1 of "Next". Steps 1 to 3 need nothing from `@eurth/style`. Step 4 onwards waits for the `@eurth/style` 1.0.0 release (`gh release list --repo eurth-org/eurth-style`); on 14 November 2026 there was none, and no HANDBOOK.md or starter template yet.
+Seats 0.1.0 is built and **live at seats.eurth.org since 15 November 2026**: Stijn asked for it to be put up ahead of its door, so it was deployed by hand (`npm run deploy`). Until the door opens on 11 December, CI checks and tests every push but does not deploy; **deploy by hand after a change**. From the door on, CI and the nightly run deploy by themselves.
+
+Check, build, 254 tests and axe (five pages, both themes) pass. Start with the first items of "Next".
 
 ## Next
 
-### 1. Core logic, as plain TypeScript with tests (`src/seats/`, `tests/`)
+- **Try every control by hand**, on a phone and with a keyboard and a screen reader: the paste dialog, the three downloads in each size, Copy picture, the share dialog, saving and loading a profile, dropping a profile on the window, the presets. The logic behind each is tested; the clicking has only been looked at in passing.
+- **Lighthouse:** CI runs it on `main`; confirm 100 in all four categories on the live site and fix what it finds.
+- **Decide what the early launch means for the advent calendar:** the site is public now. Either leave it as a quiet early door, or take the custom domain down again until 11 December (`npx wrangler delete`, then let the launch workflow put it back). The launch workflow still runs on 10 December and simply deploys again; delete `.github/workflows/launch.yml` afterwards.
+- **Propose the extra profile fields to `@eurth/profile`:** `threshold`, `systemId`, `bonus`, `majority`, and `votes` and `voteShare` on each party. Seats writes them already (unknown keys are kept); the schema should describe them.
+- **Ask Governmint to write its electoral setting into the `government` section** (`electoralSystem`), so Seats need not read it out of Governmint's link, which only works for Governmint's link version 3.
+- **A party that wins a district gets in below the threshold**, as in New Zealand: a switch for mixed-member systems.
+- **Sweden's first divisor of 1.2**, and other first divisors for modified Sainte-Laguë.
+- **Crossbenches** in the Westminster layout, and a Speaker's chair.
+- **Thresholds per coalition of parties** (Poland's 8%), and legal thresholds expressed in seats (the Netherlands' one full seat, exactly).
+- **Compare two formulas side by side** on the same votes, as the guide does for Saltmarsh.
+- **A second chamber** for bicameral legislatures, and the profile fields to carry it.
+- **Seat change since the last election** (+3, −5) in the table and the wikitext.
+- **A sound for the signature touch**, behind the footer's sound switch: a gavel when a majority forms.
+- **Launch chores:** submit the sitemap in Search Console, add Seats to status.eurth.org and Eurth's Worldbuilding Tools docs, announce it on the forum and Discord when its door opens.
 
-- `model.ts`: the election (chamber name, election label, size, system, threshold, bonus, parties with name, colour and votes or seats), limits and `cleanElection`, which checks and clamps anything that arrives from a link, a paste or a profile.
-- `allocate.ts`: D'Hondt, Sainte-Laguë, modified Sainte-Laguë (first divisor 1.4), largest remainder with the Hare and Droop quotas, and seats entered directly (first past the post or anything else). National threshold, optional majority bonus (extra seats to the largest party, the rest shared out by the formula). Exact integer arithmetic, no floating-point ties. Ties are broken by votes, then by the order of the list, and reported so the page can say so.
-- `mixed.ts`: mixed-member systems, since Governmint offers "Mixed" and the mock-up shows it: district seats entered per party, list seats computed, either side by side (parallel) or as a top-up (compensatory, with overhang seats reported).
-- `results.ts`: the results table (votes, vote share, seats, seat share, the difference), the Gallagher index of disproportionality, the majority line, whether the parliament is hung, and the one-sentence explanation of the method.
-- `coalition.ts`: a chosen set of parties gives a total, the majority needed and the margin, written out in words; also every minimal winning coalition.
-- `chamber.ts`: seat positions for the hemicycle (Wikipedia's parliament-diagram arrangement: rows of an arch, seats filled party by party from left to right), the Westminster layout (government benches facing opposition, crossbench at the end) and the horseshoe; `render.ts` turns them into SVG with a majority line, a title and a text alternative.
-- `paste.ts`: reads "party, votes" lines from a spreadsheet (tabs, commas or semicolons; thousands separators; percentages).
-- `describe.ts`: Copy description ("120 seats; Liberal Union 41, ...") and the longer written description for screen readers.
-- `wikitext.ts`: a wikitext seat table with colour cells, votes, shares and seats.
-- `link.ts`: the whole election in the query string, compact and versioned, read back through `cleanElection`.
-- `profile.ts`: to and from the profile's `seats` section, leaving every other section untouched; a starting point from the `government` section (legislature name; Governmint's majoritarian, proportional and mixed map to seats entered directly, D'Hondt and mixed).
-- `colours.ts`: the default party colours, a colour-blind-safe set whose members differ in lightness, tested for it.
-- Tests: every formula against the worked examples in the guide and against published real results, plus properties (seats always add up to the chamber, no seats below the threshold, more votes never means fewer seats within one formula).
+## 15 November 2026: preview (0.1.0)
 
-### 2. Content and data (`src/content/`)
+The first version.
 
-- The guide: how electoral systems work (proportional, majoritarian, mixed), thresholds, what each formula favours, coalition maths, with sources and a last-updated date. Every worked example in it is a test.
-- The glossary: every term the calculator and the guide use.
-- Examples: four made-up elections, one per family (proportional with a threshold, first past the post, mixed-member, proportional with a majority bonus), each a link into the calculator.
-- Presets: chamber sizes and thresholds of well-known legislatures, as starting points.
-
-### 3. Repo basics
-
-README.md (opening with the advent-calendar note), docs/feedback-log.md, LICENSE (Apache 2.0), package.json, tsconfig, Vitest, and a CI workflow that checks and tests.
-
-### 4. The site, once `@eurth/style` 1.0.0 is out
-
-From the starter template: Calculator, Guide, Glossary and Examples as real HTML pages; the Svelte calculator (parties, system, results table, chamber, coalition builder, paste); exports (SVG, PNG, WebP at the handbook's sizes, wikitext, Copy description, Copy link, Share dialog); the profile file (save, load, drag and drop); service worker, manifest, security headers, SEO and JSON-LD, Open Graph images.
-
-### 5. Delight
-
-Seats fill in party by party, left to right. "Hung." when no party has a majority. The suite's "Nice." when a party lands on exactly 69 seats.
-
-### 6. Launch
-
-The launch workflow (22:30 UTC on 10 December, waits for `LAUNCH_AT`, deploys, creating seats.eurth.org), Lighthouse and axe on main, and the handbook's checklist.
-
-## Releases
-
-None yet.
+- **Calculator:** parties with a name, a colour and votes as percentages or counts; D'Hondt, Sainte-Laguë, modified Sainte-Laguë, largest remainder with the Hare and the Droop quota; a national threshold and a majority bonus; mixed-member systems with district seats entered and list seats worked out, as a top-up (with overhang seats) or side by side; seats entered directly for first past the post and anything else. Exact whole-number arithmetic; dead heats settled by votes, then by list order, and reported.
+- **Results table:** votes, seats, both shares and their difference, the Gallagher index, the method in one sentence, and a note for ties, vacancies, overhang and too many seats.
+- **The chamber:** a hemicycle in the style of Wikipedia's parliament diagrams, a horseshoe and Westminster benches, with a majority line; parties sit in list order, left to right. Seats fill in party by party.
+- **Coalition builder:** pick parties and read the total, the majority and the margin in words; the smallest majorities are offered as shortcuts.
+- **Paste results** from a spreadsheet: tabs, commas or semicolons, thousands separators, percentages, and an optional seats column.
+- **Presets:** the size, system and threshold of 21 real chambers, each with a note on how the real thing differs.
+- **Random** elections, and **Start again**.
+- **Take it with you:** the link holds the whole election (`?d=1.…`); SVG, PNG and WebP in six sizes, in the theme you are looking at; a wikitext table; Copy link, picture and description; the share dialog.
+- **The nation profile:** Seats writes the `seats` section and leaves every other section as it was; it starts from Governmint's legislature name and electoral setting when a profile has no seats yet.
+- **Guide:** how electoral systems work, with every formula worked through on one small election, thresholds, the majority bonus, mixed-member systems, coalition maths and sources. Its tables are drawn by the calculator's own code, and every worked example is a test.
+- **Glossary** of 43 terms, and **four example elections**, one for each family of system.
+- **Default party colours** that each sit on their own step of lightness, also for red-green and blue-yellow colour blindness; every block of seats is named beside the chamber.
+- **Easter eggs:** "Hung." when a parliament becomes hung, and the suite's "Nice." when a party lands on exactly 69 seats.
+- Built from the `@eurth/style` starter on version 1.0.1, with `@eurth/profile` 1.0.0: shared header, footer, theme switch, offline copy, install button, security headers and checks.
 
 ## Not planned
 
 - **Constituency-by-constituency counts.** Seats works on national totals; district results are entered as seats won. A district simulator is a different tool.
-- **Single transferable vote and other ranked counts.** They need ballots, not totals. The guide explains them; the calculator takes their results as seats entered directly.
-- **Saving in the browser.** A design lives in its link or in the profile file, as the handbook says.
+- **Single transferable vote and other ranked counts.** They need ballots, not totals. The calculator takes their results as seats entered directly.
+- **Saving in the browser.** An election lives in its link or in the profile file, as the handbook says.
+- **Drawing lots for dead heats.** A result that changes when the page is reloaded can't live in a link; the tie-break is fixed and announced instead.
