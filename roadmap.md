@@ -14,7 +14,7 @@ Check, build, 254 tests and axe (five pages, both themes) pass. Start with the f
 
 - **Try every control by hand**, on a phone and with a keyboard and a screen reader: the paste dialog, the three downloads in each size, Copy picture, the share dialog, saving and loading a profile, dropping a profile on the window, the presets. The logic behind each is tested; the clicking has only been looked at in passing.
 - **Lighthouse:** CI runs it on `main`; confirm 100 in all four categories on the live site and fix what it finds.
-- **Decide what the early launch means for the advent calendar:** the site is public now. Either leave it as a quiet early door, or take the custom domain down again until 11 December (`npx wrangler delete`, then let the launch workflow put it back). The launch workflow still runs on 10 December and simply deploys again; delete `.github/workflows/launch.yml` afterwards.
+- **The launch workflow still runs on 10 December** and simply deploys again (Stijn decided on 15 November to keep the site public until then). Delete `.github/workflows/launch.yml` afterwards.
 - **Propose the extra profile fields to `@eurth/profile`:** `threshold`, `systemId`, `bonus`, `majority`, and `votes` and `voteShare` on each party. Seats writes them already (unknown keys are kept); the schema should describe them.
 - **Ask Governmint to write its electoral setting into the `government` section** (`electoralSystem`), so Seats need not read it out of Governmint's link, which only works for Governmint's link version 3.
 - **A party that wins a district gets in below the threshold**, as in New Zealand: a switch for mixed-member systems.
