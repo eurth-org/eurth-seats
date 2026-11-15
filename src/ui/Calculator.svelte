@@ -92,7 +92,8 @@
     outcome.parties.forEach((party, i) => watchers[i]?.(party.seats, () => document.querySelector(`[data-seats-of="${i}"]`)));
   });
 
-  // This tool's own: a parliament that becomes hung earns a one-word verdict.
+  // This tool's own: a parliament that becomes hung earns a one-word verdict. Only when an edit
+  // tips it over: an election that arrives whole (Random, a paste, a profile) has its own toast.
   let wasHung: boolean | null = null;
   $effect(() => {
     const hung = outcome.hung;
@@ -109,9 +110,9 @@
     election = cleanElection(election);
   }
 
-  /** A new election arrives whole (Random, a paste, a profile): let it earn its "Hung." */
+  /** A new election arrives whole (Random, a paste, a profile): it starts afresh, without a "Hung." */
   function replace(next: Election) {
-    wasHung = false;
+    wasHung = null;
     election = next;
   }
 
