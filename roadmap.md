@@ -12,8 +12,7 @@ Check (pages and components), build, 269 tests, axe (five pages, both themes) an
 
 ## Next
 
-- **Lighter written pages:** the guide carries a dozen chamber pictures inside its HTML (about 300 KB before compression). If Lighthouse on `main` minds, write them to files at build time.
-- **Try the remaining controls by hand:** the three downloads in each size, Copy picture, saving and loading a profile, dropping a profile on the window, and the whole page with a screen reader. Tried on the live site on 15 November and working: the coalition builder and its shortcuts, the three layouts, pasting results, switching systems, the presets, reloading from the link, the share dialog's links, Random and "Hung."
+- **Try the remaining controls by hand:** the three downloads in each size, Copy picture, saving and loading a profile, dropping a profile on the window, and the whole page with a screen reader. Tried on the live site on 15 November and working: the coalition builder and its shortcuts, the three layouts, pasting results, switching systems, the presets, reloading from the link, the share dialog's links and "Hung."; on 22 November, Random with its one warning and the Export card's four formats.
 - **The launch workflow still runs on 10 December** and simply deploys again (Stijn decided on 15 November to keep the site public until then). Delete `.github/workflows/launch.yml` afterwards.
 - **Propose the extra profile fields to `@eurth/profile`:** `threshold`, `systemId`, `bonus`, `majority`, and `votes` and `voteShare` on each party. Seats writes them already (unknown keys are kept); the schema should describe them.
 - **Ask Governmint to write its electoral setting into the `government` section** (`electoralSystem`), so Seats need not read it out of Governmint's link, which only works for Governmint's link version 3.
