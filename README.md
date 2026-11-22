@@ -13,7 +13,7 @@ What's next, and what each release added, is in [roadmap.md](roadmap.md).
 - **Results:** votes, seats, both shares and the difference between them, the Gallagher index, and the method explained in one sentence.
 - **The chamber:** a hemicycle in the style of Wikipedia's parliament diagrams, a horseshoe, or Westminster benches, with a majority line.
 - **Coalition builder:** pick parties and read, in words, whether they have a majority and by how much.
-- **Take it with you:** a link that holds the whole election; SVG, PNG and WebP in six sizes; a wikitext table; a written description; and the nation's profile file.
+- **Take it with you:** a link that holds the whole election; SVG, PNG and WebP in six sizes; the results as Markdown, wikitext, CSV or JSON; a written description; and the nation's profile file.
 
 There are four pages: the calculator, a guide to electoral systems with every formula worked through, a glossary, and four example elections.
 
@@ -36,12 +36,13 @@ src/seats/      the logic, free of the page: every file runs the same in the bro
   render.ts       the chamber as a standalone SVG; picture.ts gives it the suite's colours
   describe.ts     the result in words
   wikitext.ts     the wikitext table
+  exports.ts      the result as Markdown, CSV and JSON
   paste.ts        results pasted from a spreadsheet
   link.ts         the election in its link, compact and versioned
   profile.ts      the profile's "seats" section, and a start from Governmint's settings
   colours.ts      the default party colours
   explain.ts      the working shown in the guide's tables
-src/content/    worked examples, glossary, example elections and presets of real chambers
+src/content/    worked examples, glossary, example elections, presets of real chambers, and the pictures for the written pages
 src/ui/         the Svelte components of the calculator
 src/assets/     the mark: a red leather armchair with the Eurth yurt on its back
 src/pages/      the four pages and the 404
@@ -69,7 +70,7 @@ npm run dev
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | The site with live reload. |
-| `npm run check` | Types, in pages, components and logic. |
+| `npm run check` | Types: `astro check` for pages and logic, `svelte-check` for components. |
 | `npm run build` | The static site, into `dist/`. |
 | `npm test` | The logic and content tests, and the suite's checks of the built site. Build first. |
 | `npm run axe` | Accessibility checks on every built page, in both themes. |

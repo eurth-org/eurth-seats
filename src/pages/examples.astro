@@ -1,26 +1,19 @@
 ---
-// Examples: four made-up elections, one for each family of system, each a link into the
-// calculator. The links and pictures are made at build time with the calculator's own code.
+// Examples: four made-up elections, one for each family of system, each a tile that opens in
+// the calculator. The links and pictures are made at build time with the calculator's own code.
+import Line from '@eurth/style/components/Line.astro';
 import Page from '@eurth/style/components/Page.astro';
+import PageHead from '@eurth/style/components/PageHead.astro';
+import { lineArrowRight } from '@eurth/style/line';
 import { site } from '../../eurth.config.mjs';
 import mark from '../assets/mark.svg?raw';
 import { EXAMPLES } from '../content/examples';
-import { description, summaryLine } from '../seats/describe';
-import { encodeElection } from '../seats/link';
-import { cleanElection } from '../seats/model';
-import { chamberPicture, svgAddress } from '../seats/picture';
-import { count } from '../seats/results';
+import { illustrate } from '../content/pictures';
+import { summaryLine } from '../seats/describe';
 
 const examples = EXAMPLES.map((example) => {
-  const election = cleanElection(example.election);
-  const outcome = count(election);
-  return {
-    ...example,
-    href: `/?d=${encodeElection(election)}`,
-    picture: svgAddress(chamberPicture(election, outcome, { frame: { width: 1200, height: 630 }, id: example.id })),
-    alt: description(election, outcome),
-    summary: summaryLine(outcome),
-  };
+  const picture = illustrate(example.election);
+  return { ...example, picture, summary: summaryLine(picture.outcome) };
 });
 ---
 
@@ -32,51 +25,39 @@ const examples = EXAMPLES.map((example) => {
 >
   <!-- Seats' own mark, in front of its name: a red leather armchair with the yurt on its back. -->
   <Fragment slot="mark" set:html={mark} />
-  <div class="eu-stack">
-    <header class="eu-prose">
-      <p class="eu-kicker">Examples</p>
-      <h1>Example elections</h1>
-      <p class="eu-lead">
-        Four made-up elections, one for each family of electoral system. Open one in the <a href="/">calculator</a> and change what you like; the
-        <a href="/guide/">guide</a> explains what is going on, and the <a href="/glossary/">glossary</a> has the words.
-      </p>
-    </header>
-    <ul class="gallery">
-      {
-        examples.map((x) => (
-          <li>
-            <a class="eu-card" href={x.href}>
-              <img src={x.picture} alt={x.alt} width="1200" height="630" loading="lazy" />
-              <p class="eu-kicker">{x.family}</p>
+  <PageHead site={site} kicker="Examples" title="Example elections">
+    <Fragment slot="lead">
+      Four made-up elections, one for each family of electoral system. Open one in the <a href="/">calculator</a> and change what you like; the
+      <a href="/guide/">guide</a> explains what is going on, and the <a href="/glossary/">glossary</a> has the words.
+    </Fragment>
+  </PageHead>
+  <ul class="eu-gallery">
+    {
+      examples.map((x) => (
+        <li>
+          <a class="eu-tile" href={x.picture.href}>
+            <div class="eu-tile-art">
+              <img src={x.picture.src} alt={x.picture.alt} width="1200" height="630" loading="lazy" />
+            </div>
+            <div class="eu-tile-words">
+              <span class="eu-kicker">{x.family}</span>
               <h2>{x.name}</h2>
               <p>{x.note}</p>
               <p class="eu-data">{x.summary}</p>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-  </div>
+              <span class="eu-tile-go">
+                Open in the calculator <Line icon={lineArrowRight} />
+              </span>
+            </div>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
 </Page>
 
 <style>
-  .gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--space-4);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .gallery img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius-md);
-  }
-
-  .gallery h2 {
-    font: var(--type-heading);
+  /* Four tiles with a paragraph each: two to a row on a wide screen reads better than four thin ones. */
+  .eu-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
   }
 </style>

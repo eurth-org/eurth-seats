@@ -3,7 +3,7 @@
    * The coalition builder: pick parties and read, in words, whether they have a majority
    * together and by how much. The smallest majorities are offered as shortcuts.
    */
-  import { faCheck } from '@fortawesome/free-solid-svg-icons';
+  import { faCheck, faHandshake } from '@fortawesome/free-solid-svg-icons';
   import Icon from '@eurth/style/components/Icon.svelte';
   import { coalition, minimalWinning } from '../seats/coalition';
   import type { Outcome } from '../seats/results';
@@ -20,8 +20,9 @@
   }
 </script>
 
-<section class="coalition" aria-labelledby="coalition-title">
-  <h2 id="coalition-title">Coalition builder</h2>
+<section class="eu-card" aria-labelledby="coalition-title">
+  <h3 class="eu-card-title" id="coalition-title"><Icon icon={faHandshake} /> Coalition builder</h3>
+  <p class="eu-help">Pick parties to see whether they have a majority together, and by how many seats.</p>
   {#if seated.length === 0}
     <p class="eu-muted">Once seats are filled, pick parties here to see whether they have a majority together.</p>
   {:else}
@@ -56,16 +57,6 @@
 </section>
 
 <style>
-  .coalition {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  h2 {
-    font: var(--type-heading);
-  }
-
   p {
     margin: 0;
   }

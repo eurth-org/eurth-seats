@@ -3,21 +3,45 @@
    * The calculator: parties and votes in, seats, a chamber and a coalition out.
    *
    *   - The election lives in the link (?d=1.…): read safely on arrival, kept in step after.
-   *   - Nothing is stored: "save" is the link, a picture, wikitext or the nation's profile file.
+   *   - Nothing is stored: "save" is the link, a picture, text to paste or the nation's profile file.
    *   - What is typed is kept as typed; everything counted, drawn or shared goes through
    *     cleanElection first, and the fields are tidied when focus leaves them.
+   *   - Settings that belong together share a card, numbered in the order to take them; the
+   *     result leaves in two cards, "Save & share" and "Export", as the handbook asks.
    *   - Only tokens and eu- classes: the only colours of its own are the parties', which are data.
    */
-  import { faArrowLeft, faArrowRight, faCheck, faCopy, faDice, faDownload, faPaste, faPlus, faRotateLeft, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+  import { faMarkdown, faWikipediaW } from '@fortawesome/free-brands-svg-icons';
+  import {
+    faArrowLeft,
+    faArrowRight,
+    faChair,
+    faCheck,
+    faFileCode,
+    faFileCsv,
+    faFileExport,
+    faLandmark,
+    faPaste,
+    faPeopleGroup,
+    faPlus,
+    faRotateLeft,
+    faScaleBalanced,
+    faShareNodes,
+    faTrashCan,
+  } from '@fortawesome/free-solid-svg-icons';
   import { createProfile, getSection, setSection, type EurthProfile } from '@eurth/profile';
   import ProfileButtons from '@eurth/profile/ProfileButtons.svelte';
-  import { PICTURE_SIZES, copyText, download, fileSlug, getPrefs, niceWatcher, stateFromLocation, stateToLocation, svgToPicture, toast } from '@eurth/style';
+  import { PICTURE_SIZES, download, fileSlug, getPrefs, niceWatcher, pictureFilename, stateFromLocation, stateToLocation, svgToPicture, toast } from '@eurth/style';
+  import ExportPanel, { type ExportFormat } from '@eurth/style/components/ExportPanel.svelte';
   import Icon from '@eurth/style/components/Icon.svelte';
+  import Line from '@eurth/style/components/Line.svelte';
+  import RandomButton from '@eurth/style/components/RandomButton.svelte';
   import ShareButtons from '@eurth/style/components/ShareButtons.svelte';
+  import { lineDownloadOutline } from '@eurth/style/line';
   import { onMount } from 'svelte';
   import { PRESETS } from '../content/presets';
   import { blocksOf, drawChamber } from '../seats/chamber';
   import { chamberDescription, description, summaryLine, title } from '../seats/describe';
+  import { csv, json, markdown } from '../seats/exports';
   import { electionLink, fromCompact, LINK_VERSION, toCompact } from '../seats/link';
   import {
     cleanElection,
@@ -68,6 +92,21 @@
   const formula = $derived(isFormula(clean.system));
   const typedSeats = $derived(clean.system === 'direct' || clean.system === 'mixed');
   const chosenPreset = $derived(PRESETS.find((p) => p.id === preset));
+  const fileName = $derived(`${fileSlug(clean.chamber, 'chamber')}-seats`);
+
+  // Random and Start again only warn when there is something to lose: an election that is
+  // still the example rolls straight away.
+  const untouched = JSON.stringify(toCompact(defaultElection()));
+  const changed = $derived(JSON.stringify(toCompact(clean)) !== untouched);
+
+  // The result as text, for the Export card: Markdown first (the forum takes it), then
+  // wikitext for the nation's article, CSV for a spreadsheet and JSON for other tools.
+  const formats: ExportFormat[] = [
+    { id: 'markdown', label: 'Markdown', icon: faMarkdown, extension: 'md', type: 'text/markdown', help: 'For a post on the Eurth forum or a wiki that takes Markdown: the results as a table, who has the majority, and the link.', make: () => markdown(clean, outcome, link) },
+    { id: 'wikitext', label: 'Wikitext', icon: faWikipediaW, extension: 'wiki', type: 'text/plain', help: "For your nation's article on the Eurth wiki or any MediaWiki: a sortable table with each party's colour.", make: () => wikitext(clean, outcome) },
+    { id: 'csv', label: 'CSV', icon: faFileCsv, extension: 'csv', type: 'text/csv', help: 'For a spreadsheet: one party per line, plain numbers.', make: () => csv(clean, outcome) },
+    { id: 'json', label: 'JSON', icon: faFileCode, extension: 'json', type: 'application/json', help: 'For other tools: the settings, every party and the link, as data.', make: () => json(clean, outcome, link) },
+  ];
 
   onMount(() => {
     // A link is someone else's input: decodeState never throws, and fromCompact cleans every value.
@@ -165,10 +204,9 @@
     const chosen = getPrefs().theme;
     return chosen === 'dark' || (chosen !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
   }
-  const fileName = (ending: string): string => `${fileSlug(clean.chamber, 'chamber')}-seats${ending}`;
 
   function saveSvg() {
-    download(chamberPicture(clean, outcome, { theme: theme() }), fileName('.svg'), 'image/svg+xml');
+    download(chamberPicture(clean, outcome, { theme: theme() }), `${fileName}.svg`, 'image/svg+xml');
   }
 
   async function savePicture(type: 'image/png' | 'image/webp') {
@@ -176,14 +214,13 @@
     const frame = { width: size.width, height: size.height };
     try {
       const picture = await svgToPicture(chamberPicture(clean, outcome, { theme: theme(), frame }), { ...frame, type, quality: 0.92 });
-      download(picture, fileName(`-${size.id}.${type === 'image/png' ? 'png' : 'webp'}`));
+      // Named for what the browser made: Safari hands back a PNG when asked for WebP.
+      const file = pictureFilename(`${fileName}-${size.id}`, picture, type);
+      download(picture, file.filename);
+      if (file.note) toast(file.note);
     } catch {
       toast("The picture couldn't be made. Try the SVG instead.");
     }
-  }
-
-  async function copyWikitext() {
-    toast((await copyText(wikitext(clean, outcome))) ? 'Wikitext copied: paste it into your article.' : "That didn't copy. Your browser may not allow it here.");
   }
 
   function loaded(next: EurthProfile) {
@@ -216,101 +253,108 @@
 </script>
 
 <div class="calculator">
-  <form class="eu-card controls" onsubmit={(e) => e.preventDefault()}>
+  <form class="controls" onsubmit={(e) => e.preventDefault()}>
     <div class="eu-row">
-      <button type="button" class="eu-btn" data-click="tumble" onclick={random}><Icon icon={faDice} /> Random</button>
-      <button type="button" class="eu-btn" data-click="spin" onclick={startAgain}><Icon icon={faRotateLeft} /> Start again</button>
+      <RandomButton onrandom={random} guard={changed} what="election" tip="A made-up election, parties and all" />
+      <button type="button" class={['eu-btn', changed && 'eu-btn--risky']} data-click="spin" data-tip={changed ? 'Replaces your election with the example' : undefined} onclick={startAgain}>
+        <Icon icon={faRotateLeft} /> Start again
+      </button>
       <button type="button" class="eu-btn" onclick={() => (pasting = true)}><Icon icon={faPaste} /> Paste results</button>
     </div>
 
-    <fieldset class="group">
-      <legend class="eu-label">The chamber</legend>
-      <label class="eu-field wide">
-        <span class="eu-label">Name</span>
-        <input class="eu-input" bind:value={election.chamber} onchange={tidy} maxlength="80" autocomplete="off" placeholder="National Assembly" />
-      </label>
-      <label class="eu-field wide">
-        <span class="eu-label">Election</span>
-        <input class="eu-input" bind:value={election.election} onchange={tidy} maxlength="80" autocomplete="off" placeholder="Election 2026" />
-      </label>
-      <label class="eu-field">
-        <span class="eu-label">Seats</span>
-        <input class="eu-input eu-input--data" type="number" inputmode="numeric" min="1" max={MAX_SIZE} step="1" bind:value={election.size} onchange={tidy} />
-      </label>
-      <label class="eu-field wide">
-        <span class="eu-label">Start from a real chamber</span>
-        <select class="eu-select" bind:value={preset} onchange={usePreset} aria-describedby="preset-help">
-          <option value="">Choose one…</option>
-          {#each PRESETS as p (p.id)}
-            <option value={p.id}>{p.country}, {p.chamber} ({p.size})</option>
-          {/each}
-        </select>
-        <span class="eu-help" id="preset-help">{chosenPreset ? chosenPreset.note : 'Sets the seats, the system and the threshold. Your parties stay.'}</span>
-      </label>
-    </fieldset>
-
-    <fieldset class="group">
-      <legend class="eu-label">The system</legend>
-      <label class="eu-field wide">
-        <span class="eu-label">How votes become seats</span>
-        <select class="eu-select" bind:value={election.system} aria-describedby="system-help">
-          {#each SYSTEMS as system (system)}
-            <option value={system}>{SYSTEM_LABELS[system]}</option>
-          {/each}
-        </select>
-        <span class="eu-help" id="system-help">
-          {#if clean.system === 'direct'}
-            For first past the post, or any system counted elsewhere: type the seats each party won.
-          {:else if clean.system === 'mixed'}
-            Type the district seats each party won; the list seats are worked out from the votes.
-          {:else}
-            The <a href="/guide/" data-same-tab>guide</a> works through each formula.
-          {/if}
-        </span>
-      </label>
-      {#if clean.system === 'mixed'}
-        <fieldset class="options wide">
-          <legend class="eu-label">List seats</legend>
-          <div class="eu-row">
-            <label class="eu-pill">
-              <input type="radio" name="mixed-mode" value="compensatory" bind:group={election.mixedMode} />
-              <span class="eu-check"><Icon icon={faCheck} /></span>
-              Top up to a fair share
-            </label>
-            <label class="eu-pill">
-              <input type="radio" name="mixed-mode" value="parallel" bind:group={election.mixedMode} />
-              <span class="eu-check"><Icon icon={faCheck} /></span>
-              Side by side
-            </label>
-          </div>
-        </fieldset>
+    <section class="eu-card" aria-labelledby="chamber-title">
+      <h2 class="eu-card-title" id="chamber-title"><span class="eu-step">1</span><Icon icon={faLandmark} /> The chamber</h2>
+      <div class="fields">
         <label class="eu-field wide">
-          <span class="eu-label">Formula for the list seats</span>
-          <select class="eu-select" bind:value={election.listFormula}>
-            {#each FORMULAS as f (f)}
-              <option value={f}>{SYSTEM_LABELS[f]}</option>
+          <span class="eu-label">Name</span>
+          <input class="eu-input" bind:value={election.chamber} onchange={tidy} maxlength="80" autocomplete="off" placeholder="National Assembly" />
+        </label>
+        <label class="eu-field wide">
+          <span class="eu-label">Election</span>
+          <input class="eu-input" bind:value={election.election} onchange={tidy} maxlength="80" autocomplete="off" placeholder="Election 2026" />
+        </label>
+        <label class="eu-field">
+          <span class="eu-label">Seats</span>
+          <input class="eu-input eu-input--data" type="number" inputmode="numeric" min="1" max={MAX_SIZE} step="1" bind:value={election.size} onchange={tidy} />
+        </label>
+        <label class="eu-field wide">
+          <span class="eu-label">Start from a real chamber</span>
+          <select class="eu-select" bind:value={preset} onchange={usePreset} aria-describedby="preset-help">
+            <option value="">Choose one…</option>
+            {#each PRESETS as p (p.id)}
+              <option value={p.id}>{p.country}, {p.chamber} ({p.size})</option>
             {/each}
           </select>
+          <span class="eu-help" id="preset-help">{chosenPreset ? chosenPreset.note : 'Sets the seats, the system and the threshold. Your parties stay.'}</span>
         </label>
-      {/if}
-      {#if clean.system !== 'direct'}
-        <label class="eu-field">
-          <span class="eu-label">Threshold, %</span>
-          <input class="eu-input eu-input--data" type="number" inputmode="decimal" min="0" max="50" step="0.25" bind:value={election.threshold} onchange={tidy} />
-        </label>
-      {/if}
-      {#if formula}
-        <label class="eu-field">
-          <span class="eu-label">Bonus seats</span>
-          <input class="eu-input eu-input--data" type="number" inputmode="numeric" min="0" max={clean.size} step="1" bind:value={election.bonus} onchange={tidy} aria-describedby="bonus-help" />
-        </label>
-        <p class="eu-help wide" id="bonus-help">Bonus seats go to the party with the most votes before the rest are shared out. 0 for none.</p>
-      {/if}
-    </fieldset>
+      </div>
+    </section>
 
-    <fieldset class="group parties">
-      <legend class="eu-label">Parties, as they sit from left to right</legend>
-      <fieldset class="options wide">
+    <section class="eu-card" aria-labelledby="system-title">
+      <h2 class="eu-card-title" id="system-title"><span class="eu-step">2</span><Icon icon={faScaleBalanced} /> The system</h2>
+      <div class="fields">
+        <label class="eu-field wide">
+          <span class="eu-label">How votes become seats</span>
+          <select class="eu-select" bind:value={election.system} aria-describedby="system-help">
+            {#each SYSTEMS as system (system)}
+              <option value={system}>{SYSTEM_LABELS[system]}</option>
+            {/each}
+          </select>
+          <span class="eu-help" id="system-help">
+            {#if clean.system === 'direct'}
+              For first past the post, or any system counted elsewhere: type the seats each party won.
+            {:else if clean.system === 'mixed'}
+              Type the district seats each party won; the list seats are worked out from the votes.
+            {:else}
+              The <a href="/guide/" data-same-tab>guide</a> works through each formula.
+            {/if}
+          </span>
+        </label>
+        {#if clean.system === 'mixed'}
+          <fieldset class="options wide">
+            <legend class="eu-label">List seats</legend>
+            <div class="eu-row">
+              <label class="eu-pill">
+                <input type="radio" name="mixed-mode" value="compensatory" bind:group={election.mixedMode} />
+                <span class="eu-check"><Icon icon={faCheck} /></span>
+                Top up to a fair share
+              </label>
+              <label class="eu-pill">
+                <input type="radio" name="mixed-mode" value="parallel" bind:group={election.mixedMode} />
+                <span class="eu-check"><Icon icon={faCheck} /></span>
+                Side by side
+              </label>
+            </div>
+          </fieldset>
+          <label class="eu-field wide">
+            <span class="eu-label">Formula for the list seats</span>
+            <select class="eu-select" bind:value={election.listFormula}>
+              {#each FORMULAS as f (f)}
+                <option value={f}>{SYSTEM_LABELS[f]}</option>
+              {/each}
+            </select>
+          </label>
+        {/if}
+        {#if clean.system !== 'direct'}
+          <label class="eu-field">
+            <span class="eu-label">Threshold, %</span>
+            <input class="eu-input eu-input--data" type="number" inputmode="decimal" min="0" max="50" step="0.25" bind:value={election.threshold} onchange={tidy} />
+          </label>
+        {/if}
+        {#if formula}
+          <label class="eu-field">
+            <span class="eu-label">Bonus seats</span>
+            <input class="eu-input eu-input--data" type="number" inputmode="numeric" min="0" max={clean.size} step="1" bind:value={election.bonus} onchange={tidy} aria-describedby="bonus-help" />
+          </label>
+          <p class="eu-help wide" id="bonus-help">Bonus seats go to the party with the most votes before the rest are shared out. 0 for none.</p>
+        {/if}
+      </div>
+    </section>
+
+    <section class="eu-card" aria-labelledby="parties-title">
+      <h2 class="eu-card-title" id="parties-title"><span class="eu-step">3</span><Icon icon={faPeopleGroup} /> The parties <span class="eu-count">{election.parties.length}</span></h2>
+      <p class="eu-help">In the order they sit, from left to right.</p>
+      <fieldset class="options">
         <legend class="eu-label">Votes are</legend>
         <div class="eu-row">
           <label class="eu-pill">
@@ -326,7 +370,7 @@
         </div>
       </fieldset>
 
-      <ol class="list wide">
+      <ol class="list">
         {#each election.parties as party, i (i)}
           {@const name = clean.parties[i]?.name ?? `Party ${i + 1}`}
           <li class="party" class:with-seats={typedSeats}>
@@ -377,58 +421,48 @@
           </li>
         {/each}
       </ol>
-      <div class="eu-row wide">
+      <div class="eu-row">
         <button type="button" class="eu-btn" data-click="bounce" onclick={addParty} disabled={election.parties.length >= MAX_PARTIES}><Icon icon={faPlus} /> Add party</button>
       </div>
-    </fieldset>
+    </section>
   </form>
 
   <section class="result" aria-labelledby="result-title">
-    <h2 id="result-title" class="eu-visually-hidden">The chamber</h2>
-    {#if heading}
-      <p class="heading">
-        <strong>{clean.chamber || clean.election}</strong>
-        {#if clean.chamber && clean.election}<span class="eu-muted">{clean.election}</span>{/if}
-      </p>
-    {/if}
+    <h2 id="result-title" class="eu-visually-hidden">The result</h2>
 
-    <fieldset class="options">
-      <legend class="eu-visually-hidden">Layout of the chamber</legend>
-      <div class="eu-row">
-        {#each LAYOUTS as layout (layout)}
-          <label class="eu-pill">
-            <input type="radio" name="layout" value={layout} bind:group={election.layout} />
-            <span class="eu-check"><Icon icon={faCheck} /></span>
-            {LAYOUT_LABELS[layout]}
-          </label>
-        {/each}
-      </div>
-    </fieldset>
+    <section class="eu-card" aria-labelledby="picture-title">
+      <h3 class="eu-card-title" id="picture-title"><Icon icon={faChair} /> The chamber</h3>
+      {#if heading}
+        <p class="heading">
+          <strong>{clean.chamber || clean.election}</strong>
+          {#if clean.chamber && clean.election}<span class="eu-muted">{clean.election}</span>{/if}
+        </p>
+      {/if}
 
-    <ChamberView {chamber} parties={outcome.parties} total={outcome.total} majority={outcome.majority} description={chamberDescription(clean, outcome)} />
-    {#if clean.layout === 'westminster'}
-      <p class="eu-help">Government benches above, opposition below. The parties picked in the coalition builder govern; with none picked, the largest party does.</p>
-    {/if}
+      <fieldset class="options">
+        <legend class="eu-visually-hidden">Layout of the chamber</legend>
+        <div class="eu-row">
+          {#each LAYOUTS as layout (layout)}
+            <label class="eu-pill">
+              <input type="radio" name="layout" value={layout} bind:group={election.layout} />
+              <span class="eu-check"><Icon icon={faCheck} /></span>
+              {LAYOUT_LABELS[layout]}
+            </label>
+          {/each}
+        </div>
+      </fieldset>
 
-    <Results election={clean} {outcome} />
-    <Coalition {outcome} bind:picks={election.coalition} />
+      <ChamberView {chamber} parties={outcome.parties} total={outcome.total} majority={outcome.majority} description={chamberDescription(clean, outcome)} />
+      {#if clean.layout === 'westminster'}
+        <p class="eu-help">Government benches above, opposition below. The parties picked in the coalition builder govern; with none picked, the largest party does.</p>
+      {/if}
 
-    <section class="take" aria-labelledby="take-title">
-      <h2 id="take-title">Take it with you</h2>
-      <ShareButtons
-        url={link}
-        title={heading || `${siteName}: ${summaryLine(outcome)}`}
-        text={`${heading ? `${heading}: ` : ''}${summaryLine(outcome)} Made with ${siteName}.`}
-        description={() => words}
-        picture={() => svgToPicture(chamberPicture(clean, outcome, { theme: theme(), frame: { width: 1200, height: 630 } }), { width: 1200, height: 630 })}
-        heading={clean.chamber ? `Share the ${clean.chamber.replace(/^the /i, '')}` : 'Share this chamber'}
-        said={{ link: 'Link copied: the whole election is in it.', description: 'Description copied, seat by seat.' }}
-      />
-
+      <!-- The picture itself, to keep: beside the picture, in the colours on screen. -->
       <div class="eu-row downloads">
-        <button type="button" class="eu-btn" data-click="bounce" onclick={saveSvg}><Icon icon={faDownload} /> SVG</button>
-        <button type="button" class="eu-btn" data-click="bounce" onclick={() => savePicture('image/png')}><Icon icon={faDownload} /> PNG</button>
-        <button type="button" class="eu-btn" data-click="bounce" onclick={() => savePicture('image/webp')}><Icon icon={faDownload} /> WebP</button>
+        <span class="eu-help">Download as</span>
+        <button type="button" class="eu-btn" data-click="bounce" onclick={saveSvg}><Line icon={lineDownloadOutline} /> SVG</button>
+        <button type="button" class="eu-btn" data-click="bounce" onclick={() => savePicture('image/png')}><Line icon={lineDownloadOutline} /> PNG</button>
+        <button type="button" class="eu-btn" data-click="bounce" onclick={() => savePicture('image/webp')}><Line icon={lineDownloadOutline} /> WebP</button>
         <label class="eu-field size">
           <span class="eu-visually-hidden">Size of the PNG or WebP</span>
           <select class="eu-select" bind:value={pictureSize}>
@@ -438,27 +472,44 @@
           </select>
         </label>
       </div>
-      <div class="eu-row">
-        <button type="button" class="eu-btn" data-click="bounce" onclick={copyWikitext}><Icon icon={faCopy} /> Copy wikitext table</button>
-      </div>
+    </section>
 
-      <div class="profile">
-        {#if profile}
-          <p class="eu-label">Nation: {profile.meta.nation}</p>
-        {:else}
-          <label class="eu-field">
-            <span class="eu-label">Nation, for the profile file</span>
-            <input class="eu-input" bind:value={nation} maxlength="80" autocomplete="off" placeholder="Your nation" />
-          </label>
-        {/if}
-        <div class="eu-row">
-          <ProfileButtons profile={saved} onload={loaded} onerror={(errors) => toast(errors[0]?.message ?? "That file isn't a nation profile. Pick one that ends in .eurth.json.")} />
-        </div>
-      </div>
+    <Results election={clean} {outcome} />
+    <Coalition {outcome} bind:picks={election.coalition} />
+
+    <!-- Two cards, as in Governmint: "Save & share" keeps the result or passes it on; "Export"
+         hands it over as text, in the formats other places take. -->
+    <section class="eu-card" aria-labelledby="share-title">
+      <h3 class="eu-card-title" id="share-title"><Icon icon={faShareNodes} /> Save &amp; share</h3>
+      <ShareButtons
+        url={link}
+        title={heading || `${siteName}: ${summaryLine(outcome)}`}
+        text={`${heading ? `${heading}: ` : ''}${summaryLine(outcome)} Made with ${siteName}.`}
+        description={() => words}
+        markdown={() => markdown(clean, outcome, link)}
+        picture={() => svgToPicture(chamberPicture(clean, outcome, { theme: theme(), frame: { width: 1200, height: 630 } }), { width: 1200, height: 630 })}
+        heading={clean.chamber ? `Share the ${clean.chamber.replace(/^the /i, '')}` : 'Share this chamber'}
+        said={{ link: 'Link copied: the whole election is in it.', description: 'Description copied, seat by seat.' }}
+      >
+        <ProfileButtons profile={saved} onload={loaded} onerror={(errors) => toast(errors[0]?.message ?? "That file isn't a nation profile. Pick one that ends in .eurth.json.")} />
+      </ShareButtons>
+      {#if profile}
+        <p class="eu-label">Nation: {profile.meta.nation}</p>
+      {:else}
+        <label class="eu-field">
+          <span class="eu-label">Nation, to save a new profile file</span>
+          <input class="eu-input" bind:value={nation} maxlength="80" autocomplete="off" placeholder="Your nation" />
+        </label>
+      {/if}
       <p class="eu-help">
-        The link holds the whole election. The profile file carries your nation from one Eurth tool to the next; Seats writes only its own section. Nothing is
-        kept in this browser.
+        The link holds the whole election, so it brings this chamber back exactly. The profile file carries your nation from one Eurth tool to the next; Seats
+        writes only its own section. Nothing is kept in this browser.
       </p>
+    </section>
+
+    <section class="eu-card" aria-labelledby="export-title">
+      <h3 class="eu-card-title" id="export-title"><Icon icon={faFileExport} /> Export</h3>
+      <ExportPanel name={fileName} {formats} />
     </section>
   </section>
 </div>
@@ -474,28 +525,22 @@
   }
 
   .controls {
-    gap: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
   }
 
   p {
     margin: 0;
   }
 
-  /* A group of fields: two to a row, with the wide ones taking the whole row. */
-  .group {
+  /* Fields two to a row, with the wide ones taking the whole row. */
+  .fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-3);
     min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-
-  .group > legend {
-    margin-bottom: var(--space-2);
-    padding: 0;
-    font: var(--type-heading);
   }
 
   .wide {
@@ -572,7 +617,7 @@
   .result {
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);
+    gap: var(--space-4);
     min-width: 0;
   }
 
@@ -586,24 +631,12 @@
     font: var(--type-body);
   }
 
-  .take {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .take h2 {
-    font: var(--type-heading);
+  .downloads {
+    align-items: center;
   }
 
   .downloads .size {
     flex: 1 1 12rem;
-  }
-
-  .profile {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
   }
 
   @media (max-width: 900px) {

@@ -6,13 +6,13 @@ Three parts: what comes next, what each release added (newest first), and what's
 
 ## Pick up here
 
-Seats is built and **live at seats.eurth.org since 15 November 2026** (0.1.1 since 22 November): Stijn asked for it to be put up ahead of its door, so it was deployed by hand (`npm run deploy`). Until the door opens on 11 December, CI checks and tests every push but does not deploy; **deploy by hand after a change**. From the door on, CI and the nightly run deploy by themselves.
+Seats is built and **live at seats.eurth.org since 15 November 2026** (0.2.0 since 22 November): Stijn asked for it to be put up ahead of its door, so it was deployed by hand (`npm run deploy`). Until the door opens on 11 December, CI checks and tests every push but does not deploy; **deploy by hand after a change**. From the door on, CI and the nightly run deploy by themselves.
 
-Check, build, 261 tests, axe (five pages, both themes) and the smoke test pass. Start with the first items of "Next".
+Check (pages and components), build, 269 tests, axe (five pages, both themes) and the smoke test pass. Start with the first items of "Next".
 
 ## Next
 
-- **Catch up with the handbook since 1.4.0:** the result side as two cards, "Save & share" and "Export", with Markdown first (`ExportPanel`, `markdownTable()`, Copy Markdown); the suite's `RandomButton`, which warns once before replacing work; settings in cards under headings with an icon (`eu-card-title`, `eu-step`); the guide, glossary and examples rebuilt from `PageHead`, `Figure`, `Note` and `Toc`, with pictures; `svelte-check` in `npm run check`; `pictureFilename()` for Safari's WebP.
+- **Lighter written pages:** the guide carries a dozen chamber pictures inside its HTML (about 300 KB before compression). If Lighthouse on `main` minds, write them to files at build time.
 - **Try the remaining controls by hand:** the three downloads in each size, Copy picture, saving and loading a profile, dropping a profile on the window, and the whole page with a screen reader. Tried on the live site on 15 November and working: the coalition builder and its shortcuts, the three layouts, pasting results, switching systems, the presets, reloading from the link, the share dialog's links, Random and "Hung."
 - **The launch workflow still runs on 10 December** and simply deploys again (Stijn decided on 15 November to keep the site public until then). Delete `.github/workflows/launch.yml` afterwards.
 - **Propose the extra profile fields to `@eurth/profile`:** `threshold`, `systemId`, `bonus`, `majority`, and `votes` and `voteShare` on each party. Seats writes them already (unknown keys are kept); the schema should describe them.
@@ -26,6 +26,21 @@ Check, build, 261 tests, axe (five pages, both themes) and the smoke test pass. 
 - **Seat change since the last election** (+3, −5) in the table and the wikitext.
 - **A sound for the signature touch**, behind the footer's sound switch: a gavel when a majority forms.
 - **Launch chores:** submit the sitemap in Search Console, add Seats to status.eurth.org and Eurth's Worldbuilding Tools docs, announce it on the forum and Discord when its door opens.
+
+## 22 November 2026: 0.2.0
+
+Caught up with the handbook of `@eurth/style` 1.10.0.
+
+- **The result leaves in two cards, as in Governmint.** "Save & share": Copy link, Share, Copy picture, Copy description, Copy Markdown, and the profile's Load and Save. "Export": the result as text, with Markdown first, then wikitext, CSV and JSON, each with a line saying what it is for, Copy text and Download.
+- **Markdown:** the results as a table, who has the majority, the coalition, any notes and the link that brings the election back. Typed names can't turn into markup.
+- **CSV and JSON** of the results; a name that starts like a formula stays text in a spreadsheet.
+- **The chamber's own downloads** sit with the chamber, in a row that begins "Download as". A WebP that Safari hands back as PNG is named `.png`, and says so.
+- **Settings in numbered cards:** the chamber, the system, the parties, each under a heading with an icon; the result side likewise: the chamber, results, coalition builder.
+- **The suite's Random:** it warns once before replacing an election you have changed, and rolls straight away when you haven't. Start again warns the same way.
+- **The guide, glossary and examples are illustrated**, with chambers drawn by the calculator's own code, each opening in the calculator: twelve in the guide, nine in the glossary. The guide gains a contents column, a section on the shape of the room, and a closing panel; the glossary is cards; the examples are tiles.
+- **A line of its own in the footer's "With thanks".**
+- **`svelte-check`** joins `npm run check`.
+- Large parties in the example elections no longer wear the darkest colour, which read as empty seats at Night.
 
 ## 22 November 2026: 0.1.1
 

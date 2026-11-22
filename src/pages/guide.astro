@@ -1,12 +1,21 @@
 ---
 // The guide: how votes become seats, with every formula worked through on the same small
-// election. The tables are drawn by the calculator's own code (Working.astro), and each one
-// is held to its result by tests/content.test.ts.
+// election. The tables (Working.astro) and the pictures (illustrate()) are made at build time
+// by the calculator's own code, and each worked example is held to its result by
+// tests/content.test.ts. Every picture opens in the calculator.
 import { article, ref, wikipedia } from '@eurth/style/build';
+import Figure from '@eurth/style/components/Figure.astro';
+import Line from '@eurth/style/components/Line.astro';
+import Note from '@eurth/style/components/Note.astro';
 import Page from '@eurth/style/components/Page.astro';
+import PageHead from '@eurth/style/components/PageHead.astro';
+import Toc from '@eurth/style/components/Toc.astro';
+import { lineEdit } from '@eurth/style/line';
 import { site } from '../../eurth.config.mjs';
 import mark from '../assets/mark.svg?raw';
 import Working from '../components/Working.astro';
+import { EXAMPLES } from '../content/examples';
+import { illustrate } from '../content/pictures';
 import { worked } from '../content/worked';
 import { allocate } from '../seats/allocate';
 import { coalition, minimalWinning } from '../seats/coalition';
@@ -15,7 +24,7 @@ import { encodeElection } from '../seats/link';
 import { cleanElection, defaultElection } from '../seats/model';
 import { count } from '../seats/results';
 
-const updated = '2026-11-15';
+const updated = '2026-11-22';
 const headline = 'How electoral systems turn votes into seats';
 const description =
   "How votes become seats: proportional, majoritarian and mixed systems; D'Hondt, Sainte-Laguë and largest remainder worked through; thresholds and coalition maths.";
@@ -29,6 +38,38 @@ const coalitions = minimalWinning(result).map((members) => ({
 }));
 const telandLink = `/?d=${encodeElection(teland)}`;
 const term = (id: string): string => `/glossary/#${id}`;
+
+// The pictures: each is an election the calculator can open.
+const example = (id: string) => EXAMPLES.find((x) => x.id === id)!.election;
+const art = {
+  teland: illustrate(teland),
+  brackland: illustrate(example('brackland')),
+  dhondt: illustrate(worked('dhondt').election, { election: "D'Hondt" }),
+  sainteLague: illustrate(worked('sainte-lague').election, { election: 'Sainte-Laguë' }),
+  open: illustrate(worked('dhondt').election, { election: 'No threshold' }),
+  threshold: illustrate(worked('threshold').election, { election: 'A 10% threshold' }),
+  topUp: illustrate(worked('mixed-top-up').election, { election: 'With a top-up' }),
+  parallel: illustrate(worked('mixed-parallel').election, { election: 'Side by side' }),
+  coalition: illustrate(teland, { coalition: [1, 2], layout: 'westminster' }),
+  hemicycle: illustrate(teland, { layout: 'hemicycle' }),
+  horseshoe: illustrate(teland, { layout: 'horseshoe' }),
+  benches: illustrate(example('brackland'), { layout: 'westminster' }),
+};
+const sections = [
+  { id: 'families', label: 'Three families' },
+  { id: 'example', label: 'The example: Saltmarsh' },
+  { id: 'highest-averages', label: 'Highest averages' },
+  { id: 'largest-remainder', label: 'Largest remainder' },
+  { id: 'compare', label: 'What each formula favours' },
+  { id: 'thresholds', label: 'Thresholds' },
+  { id: 'bonus', label: 'A bonus for the winner' },
+  { id: 'mixed', label: 'Mixed-member systems' },
+  { id: 'coalitions', label: 'Coalition maths' },
+  { id: 'room', label: 'The shape of the room' },
+  { id: 'measuring', label: 'Measuring the distortion' },
+  { id: 'choosing', label: 'Choosing for your nation' },
+  { id: 'sources', label: 'Sources' },
+];
 
 // The comparison table: Saltmarsh's ten seats under each formula, counted here, not typed in.
 const saltmarsh = cleanElection(worked('dhondt').election);
@@ -54,15 +95,18 @@ const compared = (
 >
   <!-- Seats' own mark, in front of its name: a red leather armchair with the yurt on its back. -->
   <Fragment slot="mark" set:html={mark} />
-  <article class="eu-prose">
-    <p class="eu-kicker">Guide</p>
-    <h1>{headline}</h1>
-    <p class="eu-lead">
-      An election ends with a pile of votes. A parliament needs a list of members. Everything in between is arithmetic, and the arithmetic a country chooses
-      shapes its politics for generations. This guide works through each method on the same small election, so you can pick one for your nation and know what it
-      will do.
-    </p>
+  <PageHead
+    site={site}
+    kicker="Guide"
+    title={headline}
+    updated={updated}
+    lead="An election ends with a pile of votes. A parliament needs a list of members. Everything in between is arithmetic, and the arithmetic a country chooses shapes its politics for generations. This guide works through each method on the same small election, so you can pick one for your nation and know what it will do."
+  >
+    <a slot="art" href={art.teland.href}><img src={art.teland.src} alt={art.teland.alt} width="1200" height="630" /></a>
+  </PageHead>
 
+  <div class="eu-article">
+    <article class="eu-prose">
     <h2 id="families">Three families</h2>
     <p>Every electoral system answers one question: who gets the seat? There are three broad answers.</p>
     <ul>
@@ -80,6 +124,15 @@ const compared = (
         <strong><a href={term('mixed-member')}>Mixed</a></strong> systems do both: some members for districts, the rest from party lists.
       </li>
     </ul>
+    <div class="eu-figures">
+      <Figure caption="First past the post in Brackland: 38% of the vote, 55% of the seats.">
+        <a href={art.brackland.href}><img src={art.brackland.src} alt={art.brackland.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+      <Figure caption="A proportional count in Teland: 33% of the vote, 34% of the seats, and nobody with a majority.">
+        <a href={art.teland.href}><img src={art.teland.src} alt={art.teland.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+    </div>
+    <Note>Every picture in this guide opens in the calculator, so you can change the numbers and see for yourself.</Note>
     <p>
       <a href="/">Seats</a> does the arithmetic for the proportional and mixed families. For majoritarian systems the counting happens district by district,
       so you enter the seats each party won and Seats draws the chamber and shows how far the result strays from the vote.
@@ -167,6 +220,14 @@ const compared = (
     </p>
 
     <h2 id="compare">What each formula favours</h2>
+    <div class="eu-figures">
+      <Figure caption="D'Hondt: the tenth seat goes to the second-largest party.">
+        <a href={art.dhondt.href}><img src={art.dhondt.src} alt={art.dhondt.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+      <Figure caption="Sainte-Laguë: the same votes, and the seat goes to the third party.">
+        <a href={art.sainteLague.href}><img src={art.sainteLague.src} alt={art.sainteLague.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+    </div>
     <div class="eu-scroll" tabindex="0" role="region" aria-label="Saltmarsh's ten seats under each formula">
       <table>
         <caption>Saltmarsh's ten seats under each formula.</caption>
@@ -210,6 +271,14 @@ const compared = (
       keep a parliament from splintering, at the cost of <a href={term('wasted-votes')}>wasted votes</a>.
     </p>
     <Working id="threshold" caption="Saltmarsh by D'Hondt with a 10% threshold: the Lantern Club's 9.4% falls short, and its seat goes to the Harbour Party." />
+    <div class="eu-figures">
+      <Figure caption="No threshold: four parties on the council.">
+        <a href={art.open.href}><img src={art.open.src} alt={art.open.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+      <Figure caption="A 10% threshold: the smallest party is out, and the largest gains its seat.">
+        <a href={art.threshold.href}><img src={art.threshold.src} alt={art.threshold.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+    </div>
     <p>
       The votes of the parties left out are set aside, and the seats are shared among the rest. Every party that gets in gains a little, the largest most of
       all.
@@ -248,6 +317,15 @@ const compared = (
     </p>
     <Working id="mixed-parallel" caption="Side by side: the five list seats are shared by Sainte-Laguë on their own, and added to the wards." />
     <p>The Harbour Party keeps its sweep of the wards and takes its share of the lists as well: six seats of ten on 41.6% of the vote.</p>
+
+    <div class="eu-figures">
+      <Figure caption="With a top-up: the council matches the vote.">
+        <a href={art.topUp.href}><img src={art.topUp.src} alt={art.topUp.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+      <Figure caption="Side by side: the winner of the wards keeps its lead.">
+        <a href={art.parallel.href}><img src={art.parallel.src} alt={art.parallel.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+    </div>
 
     <h3 id="overhang">Overhang seats</h3>
     <p>
@@ -288,6 +366,29 @@ const compared = (
       <a href={term('minority-government')}>minority government</a>, for as long as the others cannot agree to bring it down.
     </p>
 
+    <Figure caption="One of Teland's five: Civic Alliance and Liberal Union on the government benches, with 63 seats of 120.">
+      <a href={art.coalition.href}><img src={art.coalition.src} alt={art.coalition.alt} width="1200" height="630" loading="lazy" /></a>
+    </Figure>
+
+    <h2 id="room">The shape of the room</h2>
+    <p>
+      How a chamber is laid out says something about its politics, and Seats draws three. A <a href={term('hemicycle')}>hemicycle</a> seats everyone in one
+      arc facing the chair, from left to right: the shape of most parliaments elected in proportion, where today's opponent is next year's partner. The
+      <a href={term('westminster-layout')}>Westminster layout</a> sets government and opposition face to face across an aisle, as in the British House of
+      Commons, which was rebuilt that way on purpose after the war. A <a href={term('horseshoe')}>horseshoe</a> sits between the two.
+    </p>
+    <div class="eu-figures">
+      <Figure caption="A hemicycle: one arc, parties from left to right, and a line at the majority.">
+        <a href={art.hemicycle.href}><img src={art.hemicycle.src} alt={art.hemicycle.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+      <Figure caption="A horseshoe: two straight banks joined by a curve.">
+        <a href={art.horseshoe.href}><img src={art.horseshoe.src} alt={art.horseshoe.alt} width="1200" height="630" loading="lazy" /></a>
+      </Figure>
+    </div>
+    <Figure caption="Westminster benches: the government above the aisle, everyone else below.">
+      <a href={art.benches.href}><img src={art.benches.src} alt={art.benches.alt} width="1200" height="630" loading="lazy" /></a>
+    </Figure>
+
     <h2 id="measuring">Measuring the distortion</h2>
     <p>
       The results table in Seats shows, for each party, the difference between its share of the seats and its share of the votes. The
@@ -304,12 +405,6 @@ const compared = (
       <li><strong>A dominant party that likes to look fair:</strong> D'Hondt in small districts, a high threshold, or a majority bonus. All three are entirely legal.</li>
       <li><strong>A young democracy after a hard decade:</strong> largest remainder with the Hare quota and no threshold, so that every faction has a voice inside the chamber.</li>
     </ul>
-    <p>
-      Whatever you choose, <a href="/">try it in the calculator</a> with your parties' numbers, or start from one of the <a href="/examples/">examples</a>. The
-      <a href="/glossary/">glossary</a> has every term in one place. When the chamber looks right, give it a country: <a href="https://eurth.org">Eurth</a>
-      has a world for it to live in.
-    </p>
-
     <h2 id="sources">Sources</h2>
     <ul>
       <li>
@@ -335,6 +430,19 @@ const compared = (
         <a href={wikipedia('Apportionment paradox', site.host)}>Apportionment paradox</a> and <a href={wikipedia('Gallagher index', site.host)}>Gallagher index</a>.
       </li>
     </ul>
-    <p class="eu-muted">Last updated <time datetime={updated}>15 November 2026</time>.</p>
-  </article>
+    </article>
+    <Toc items={sections} />
+  </div>
+
+  <div class="eu-next">
+    <div class="eu-next-words">
+      <h2>Try it</h2>
+      <p>
+        Whatever you choose, try it with your parties' numbers, or start from one of the <a href="/examples/">examples</a>. The
+        <a href="/glossary/">glossary</a> has every term in one place. When the chamber looks right, give it a country: <a href="https://eurth.org">Eurth</a>
+        has a world for it to live in.
+      </p>
+    </div>
+    <a class="eu-btn eu-btn--primary" href="/"><Line icon={lineEdit} /> Open the calculator</a>
+  </div>
 </Page>

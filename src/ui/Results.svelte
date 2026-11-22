@@ -3,6 +3,8 @@
    * The results table: votes, seats, each party's share of both and the difference, with the
    * method explained in one sentence underneath, and a note for anything unusual.
    */
+  import { faTableList } from '@fortawesome/free-solid-svg-icons';
+  import Icon from '@eurth/style/components/Icon.svelte';
   import { issueNotes } from '../seats/describe';
   import { formatNumber, formatPercent, formatPoints, formatShare } from '../seats/format';
   import type { Election } from '../seats/model';
@@ -17,8 +19,8 @@
   const sum = (pick: (p: Outcome['parties'][number]) => number): number => outcome.parties.reduce((total, p) => total + pick(p), 0);
 </script>
 
-<section class="results" aria-labelledby="results-title">
-  <h2 id="results-title">Results</h2>
+<section class="eu-card" aria-labelledby="results-title">
+  <h3 class="eu-card-title" id="results-title"><Icon icon={faTableList} /> Results</h3>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex: a table that scrolls sideways must be reachable by keyboard -->
   <div class="eu-scroll" tabindex="0" role="region" aria-label="Results table">
     <table>
@@ -103,16 +105,6 @@
 </section>
 
 <style>
-  .results {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  h2 {
-    font: var(--type-heading);
-  }
-
   p {
     margin: 0;
   }

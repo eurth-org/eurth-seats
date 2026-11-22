@@ -2,7 +2,9 @@
 // The calculator, and under it what search engines and newcomers both want: what it is, how to
 // use it, and answers to the usual questions (also given to search engines as structured data).
 import { faqPage, webApplication } from '@eurth/style/build';
+import { faChartPie } from '@fortawesome/free-solid-svg-icons';
 import Page from '@eurth/style/components/Page.astro';
+import ThanksItem from '@eurth/style/components/ThanksItem.astro';
 import { site } from '../../eurth.config.mjs';
 import mark from '../assets/mark.svg?raw';
 import Calculator from '../ui/Calculator.svelte';
@@ -18,11 +20,11 @@ const faq = [
   },
   {
     q: 'Where is my election saved?',
-    a: 'In its link. The link holds every party, vote and setting, so copying the link is saving it. You can also download the chart, copy a wikitext table, or save your nation as a profile file that the other Eurth tools can read. Nothing is kept in your browser or on a server.',
+    a: 'In its link. The link holds every party, vote and setting, so copying the link is saving it. You can also download the chart, export the table as Markdown or wikitext, or save your nation as a profile file that the other Eurth tools can read. Nothing is kept in your browser or on a server.',
   },
   {
     q: 'Can I use the parliament chart on a wiki or in a forum post?',
-    a: 'Yes. Download it as SVG, PNG or WebP in six sizes, and copy the results as a wikitext table. The pictures are yours to use anywhere.',
+    a: 'Yes. Download it as SVG, PNG or WebP in six sizes, and export the results as Markdown for the forum or as a wikitext table for a wiki. The pictures are yours to use anywhere.',
   },
   {
     q: 'How does it break a tie?',
@@ -45,7 +47,7 @@ const faq = [
         'Thresholds and majority bonus',
         'Parliament chart: hemicycle, horseshoe and Westminster layouts',
         'Coalition builder',
-        'SVG, PNG and WebP downloads, wikitext table',
+        'SVG, PNG and WebP downloads', 'Markdown, wikitext, CSV and JSON export',
         'Link that holds the whole election',
         'Nation profile file',
       ],
@@ -72,7 +74,7 @@ const faq = [
         <li>List the parties in the order they sit, from left to right, with their votes as percentages or counts. You can paste them straight from a spreadsheet.</li>
         <li>Choose how votes become seats. The table shows each party's seats and how far its share of seats strays from its share of votes.</li>
         <li>Pick parties in the coalition builder to see whether they have a majority, and by how many seats.</li>
-        <li>Copy the link, download the chart, or copy the table as wikitext for your nation's article.</li>
+        <li>Copy the link, download the chart, or export the table as Markdown for the forum or wikitext for your nation's article.</li>
       </ol>
       <p>
         New to electoral systems? The <a href="/guide/">guide</a> works through every formula on one small election, the <a href="/glossary/">glossary</a>
@@ -93,7 +95,11 @@ const faq = [
     </section>
   </div>
 
-  <Fragment slot="inspirations">Seats takes after the parliament diagrams of Wikipedia and the election-night seat calculators of public broadcasters.</Fragment>
+  <!-- Seats' own line of the footer's "With thanks": whose work it stands on. -->
+  <ThanksItem slot="thanks" icon={faChartPie}>
+    Seats takes after the parliament diagrams of Wikipedia and the election-night seat calculators of public broadcasters. Its armchair tips its hat to the one
+    Readability used to sit in.
+  </ThanksItem>
 </Page>
 
 <style>
