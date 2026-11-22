@@ -3,6 +3,7 @@
 // calculator. The links and pictures are made at build time with the calculator's own code.
 import Page from '@eurth/style/components/Page.astro';
 import { site } from '../../eurth.config.mjs';
+import mark from '../assets/mark.svg?raw';
 import { EXAMPLES } from '../content/examples';
 import { description, summaryLine } from '../seats/describe';
 import { encodeElection } from '../seats/link';
@@ -29,6 +30,8 @@ const examples = EXAMPLES.map((example) => {
   description="Four made-up elections to open in the calculator: a list election with a threshold, first past the post, a mixed-member system and a majority bonus."
   crumbs={[{ name: 'Examples', path: '/examples/' }]}
 >
+  <!-- Seats' own mark, in front of its name: an armchair with the yurt on its back. -->
+  <Fragment slot="mark" set:html={mark} />
   <div class="eu-stack">
     <header class="eu-prose">
       <p class="eu-kicker">Examples</p>

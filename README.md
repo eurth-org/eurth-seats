@@ -43,6 +43,7 @@ src/seats/      the logic, free of the page: every file runs the same in the bro
   explain.ts      the working shown in the guide's tables
 src/content/    worked examples, glossary, example elections and presets of real chambers
 src/ui/         the Svelte components of the calculator
+src/assets/     the mark: an armchair with the Eurth yurt on its back
 src/pages/      the four pages and the 404
 tests/          the logic, the content, and the suite's standard checks of the built site
 ```
@@ -72,6 +73,7 @@ npm run dev
 | `npm run build` | The static site, into `dist/`. |
 | `npm test` | The logic and content tests, and the suite's checks of the built site. Build first. |
 | `npm run axe` | Accessibility checks on every built page, in both themes. |
+| `npm run smoke` | The built site in real Chrome under its real headers: nothing stored, nothing blocked, every page offline. |
 | `npm run preview` | Builds, then serves `dist/` with its real headers (`wrangler dev`). |
 | `npm run images` | Remakes the icons and the sharing image in `public/`. |
 

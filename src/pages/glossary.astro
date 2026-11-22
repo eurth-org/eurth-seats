@@ -4,6 +4,7 @@
 import { definedTermSet } from '@eurth/style/build';
 import Page from '@eurth/style/components/Page.astro';
 import { site } from '../../eurth.config.mjs';
+import mark from '../assets/mark.svg?raw';
 import { GLOSSARY, inSentence } from '../content/glossary';
 
 const name = 'Glossary of election and parliament terms';
@@ -17,6 +18,8 @@ const byId = new Map(GLOSSARY.map((t) => [t.id, t]));
   crumbs={[{ name: 'Glossary', path: '/glossary/' }]}
   jsonld={[definedTermSet(site, { name, path: '/glossary/', terms: GLOSSARY })]}
 >
+  <!-- Seats' own mark, in front of its name: an armchair with the yurt on its back. -->
+  <Fragment slot="mark" set:html={mark} />
   <article class="eu-prose">
     <p class="eu-kicker">Glossary</p>
     <h1>{name}</h1>

@@ -5,6 +5,7 @@
 import { article, ref, wikipedia } from '@eurth/style/build';
 import Page from '@eurth/style/components/Page.astro';
 import { site } from '../../eurth.config.mjs';
+import mark from '../assets/mark.svg?raw';
 import Working from '../components/Working.astro';
 import { worked } from '../content/worked';
 import { allocate } from '../seats/allocate';
@@ -51,6 +52,8 @@ const compared = (
   crumbs={[{ name: 'Guide', path: '/guide/' }]}
   jsonld={[article(site, { headline, path: '/guide/', description, updated })]}
 >
+  <!-- Seats' own mark, in front of its name: an armchair with the yurt on its back. -->
+  <Fragment slot="mark" set:html={mark} />
   <article class="eu-prose">
     <p class="eu-kicker">Guide</p>
     <h1>{headline}</h1>

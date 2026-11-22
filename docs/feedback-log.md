@@ -4,4 +4,5 @@ Every point from a review of Seats, and the release that dealt with it. Newest f
 
 | Date | Point | Done in |
 | --- | --- | --- |
+| 22 November 2026 | The logo could be a seat with the Eurth yurt on its back, like the chair in Readability's old logo (Stijn). | 0.1.1 |
 | 15 November 2026 | Put the site up at seats.eurth.org ahead of its door (Stijn). | 0.1.0 |

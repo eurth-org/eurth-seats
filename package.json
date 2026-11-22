@@ -1,7 +1,7 @@
 {
   "name": "eurth-seats",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Seats: turn votes into seats and draw the chamber. A free online seat calculator and parliament chart maker for worldbuilders, by Eurth. Static Astro site with a Svelte tool, on Cloudflare Workers.",
   "license": "Apache-2.0",
@@ -15,6 +15,7 @@
     "check": "astro check",
     "test": "vitest run",
     "axe": "eurth-axe dist",
+    "smoke": "eurth-smoke",
     "images": "node tools/make-images.mjs",
     "deploy": "npm run build && wrangler deploy"
   },

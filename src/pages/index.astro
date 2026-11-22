@@ -4,6 +4,7 @@
 import { faqPage, webApplication } from '@eurth/style/build';
 import Page from '@eurth/style/components/Page.astro';
 import { site } from '../../eurth.config.mjs';
+import mark from '../assets/mark.svg?raw';
 import Calculator from '../ui/Calculator.svelte';
 
 const faq = [
@@ -52,6 +53,8 @@ const faq = [
     faqPage(faq),
   ]}
 >
+  <!-- Seats' own mark, in front of its name: an armchair with the yurt on its back. -->
+  <Fragment slot="mark" set:html={mark} />
   <div class="eu-stack">
     <header class="eu-stack intro">
       <p class="eu-kicker">Seats, by Eurth</p>

@@ -6,12 +6,13 @@ Three parts: what comes next, what each release added (newest first), and what's
 
 ## Pick up here
 
-Seats 0.1.0 is built and **live at seats.eurth.org since 15 November 2026**: Stijn asked for it to be put up ahead of its door, so it was deployed by hand (`npm run deploy`). Until the door opens on 11 December, CI checks and tests every push but does not deploy; **deploy by hand after a change**. From the door on, CI and the nightly run deploy by themselves.
+Seats is built and **live at seats.eurth.org since 15 November 2026** (0.1.1 since 22 November): Stijn asked for it to be put up ahead of its door, so it was deployed by hand (`npm run deploy`). Until the door opens on 11 December, CI checks and tests every push but does not deploy; **deploy by hand after a change**. From the door on, CI and the nightly run deploy by themselves.
 
-Check, build, 254 tests and axe (five pages, both themes) pass. Start with the first items of "Next".
+Check, build, 261 tests, axe (five pages, both themes) and the smoke test pass. Start with the first items of "Next".
 
 ## Next
 
+- **Catch up with the handbook since 1.4.0:** the result side as two cards, "Save & share" and "Export", with Markdown first (`ExportPanel`, `markdownTable()`, Copy Markdown); the suite's `RandomButton`, which warns once before replacing work; settings in cards under headings with an icon (`eu-card-title`, `eu-step`); the guide, glossary and examples rebuilt from `PageHead`, `Figure`, `Note` and `Toc`, with pictures; `svelte-check` in `npm run check`; `pictureFilename()` for Safari's WebP.
 - **Try the remaining controls by hand:** the three downloads in each size, Copy picture, saving and loading a profile, dropping a profile on the window, and the whole page with a screen reader. Tried on the live site on 15 November and working: the coalition builder and its shortcuts, the three layouts, pasting results, switching systems, the presets, reloading from the link, the share dialog's links, Random and "Hung."
 - **The launch workflow still runs on 10 December** and simply deploys again (Stijn decided on 15 November to keep the site public until then). Delete `.github/workflows/launch.yml` afterwards.
 - **Propose the extra profile fields to `@eurth/profile`:** `threshold`, `systemId`, `bonus`, `majority`, and `votes` and `voteShare` on each party. Seats writes them already (unknown keys are kept); the schema should describe them.
@@ -25,6 +26,12 @@ Check, build, 254 tests and axe (five pages, both themes) pass. Start with the f
 - **Seat change since the last election** (+3, −5) in the table and the wikitext.
 - **A sound for the signature touch**, behind the footer's sound switch: a gavel when a majority forms.
 - **Launch chores:** submit the sitemap in Search Console, add Seats to status.eurth.org and Eurth's Worldbuilding Tools docs, announce it on the forum and Discord when its door opens.
+
+## 22 November 2026: 0.1.1
+
+- **Seats has a mark of its own:** an armchair with the Eurth yurt on its back, after the chair in Readability's old logo (Stijn's idea). It stands in front of the name in the header, and it is the favicon, the home-screen icon and the mark on the sharing image. It is `src/assets/mark.svg`; the yurt on it is the suite's own, placed as it is.
+- **On `@eurth/style` 1.10.0:** the blue bar with the pages as pills, the new footer, chosen options in eurth-blue. Nothing in Seats had to change for it.
+- **`npm run smoke`:** the built site in real Chrome under its real headers, as the suite's CI now runs it.
 
 ## 15 November 2026: preview (0.1.0)
 
