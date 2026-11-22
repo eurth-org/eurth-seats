@@ -18,7 +18,7 @@ const byId = new Map(GLOSSARY.map((t) => [t.id, t]));
   crumbs={[{ name: 'Glossary', path: '/glossary/' }]}
   jsonld={[definedTermSet(site, { name, path: '/glossary/', terms: GLOSSARY })]}
 >
-  <!-- Seats' own mark, in front of its name: an armchair with the yurt on its back. -->
+  <!-- Seats' own mark, in front of its name: a red leather armchair with the yurt on its back. -->
   <Fragment slot="mark" set:html={mark} />
   <article class="eu-prose">
     <p class="eu-kicker">Glossary</p>

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { site } from '../eurth.config.mjs';
 
-// Seats' mark: an armchair with the Eurth yurt on its back. It is the favicon, the home-screen
+// Seats' mark: a red leather armchair with the Eurth yurt on its back. It is the favicon, the home-screen
 // icon and the mark on the sharing image; the pages put it in the header.
 const mark = readFileSync(new URL('../src/assets/mark.svg', import.meta.url), 'utf8');
 

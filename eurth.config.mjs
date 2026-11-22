@@ -22,7 +22,7 @@ export const site = defineSite({
   ],
   repo: 'https://github.com/eurth-org/eurth-seats',
   category: 'UtilitiesApplication',
-  ogAlt: 'Seats, by Eurth, at seats.eurth.org: its mark, an armchair with the Eurth yurt on its back, beside a parliament chart of 120 seats in a hemicycle, five parties from left to right, with a line at the majority.',
+  ogAlt: 'Seats, by Eurth, at seats.eurth.org: its mark, a red leather armchair with the Eurth yurt on its back, beside a parliament chart of 120 seats in a hemicycle, five parties from left to right, with a line at the majority.',
   llms:
     "Seats turns votes into seats (D'Hondt, Sainte-Laguë, modified Sainte-Laguë, largest remainder with the Hare and Droop quotas, mixed-member systems, or seats entered directly), draws the chamber as a hemicycle, a horseshoe or Westminster benches, and works out coalitions.\n\nAn election lives in its link: https://seats.eurth.org/?d=1.<state>. The guide explains every formula with worked examples; the glossary defines every term.",
 });

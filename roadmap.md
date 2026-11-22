@@ -29,7 +29,7 @@ Check, build, 261 tests, axe (five pages, both themes) and the smoke test pass. 
 
 ## 22 November 2026: 0.1.1
 
-- **Seats has a mark of its own:** an armchair with the Eurth yurt on its back, after the chair in Readability's old logo (Stijn's idea). It stands in front of the name in the header, and it is the favicon, the home-screen icon and the mark on the sharing image. It is `src/assets/mark.svg`; the yurt on it is the suite's own, placed as it is.
+- **Seats has a mark of its own:** a red leather armchair with the Eurth yurt stamped in gold on its back, after the chair in Readability's old logo (Stijn's idea, and his choice of red leather). It stands in front of the name in the header, and it is the favicon, the home-screen icon and the mark on the sharing image. It is `src/assets/mark.svg`; the yurt on it is the suite's own, placed as it is.
 - **On `@eurth/style` 1.10.0:** the blue bar with the pages as pills, the new footer, chosen options in eurth-blue. Nothing in Seats had to change for it.
 - **`npm run smoke`:** the built site in real Chrome under its real headers, as the suite's CI now runs it.
 

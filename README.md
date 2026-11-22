@@ -43,7 +43,7 @@ src/seats/      the logic, free of the page: every file runs the same in the bro
   explain.ts      the working shown in the guide's tables
 src/content/    worked examples, glossary, example elections and presets of real chambers
 src/ui/         the Svelte components of the calculator
-src/assets/     the mark: an armchair with the Eurth yurt on its back
+src/assets/     the mark: a red leather armchair with the Eurth yurt on its back
 src/pages/      the four pages and the 404
 tests/          the logic, the content, and the suite's standard checks of the built site
 ```
